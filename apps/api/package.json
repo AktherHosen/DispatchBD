@@ -1,0 +1,35 @@
+{
+  "name": "api",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js"
+  },
+  "dependencies": {
+    "express": "latest",
+    "mongoose": "latest",
+    "cors": "latest",
+    "helmet": "latest",
+    "dotenv": "latest",
+    "bcryptjs": "latest",
+    "jsonwebtoken": "latest",
+    "cookie-parser": "latest",
+    "zod": "latest",
+    "express-rate-limit": "latest",
+    "ioredis": "latest",
+    "axios": "latest",
+    "node-cron": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "tsx": "latest",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "@types/cors": "latest",
+    "@types/bcryptjs": "latest",
+    "@types/jsonwebtoken": "latest",
+    "@types/cookie-parser": "latest"
+  }
+}
