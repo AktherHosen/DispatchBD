@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "sonner";
 import { store } from "./store/store";
 import App from "./App";
@@ -11,15 +12,17 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <SidebarProvider>
-            <App />
-            <Toaster position="top-right" richColors />
-          </SidebarProvider>
-        </TooltipProvider>
-      </ThemeProvider>
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <ThemeProvider>
+          <TooltipProvider>
+            <SidebarProvider>
+              <App />
+              <Toaster position="top-right" richColors />
+            </SidebarProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </Provider>
+    </ErrorBoundary>
   </React.StrictMode>
 );

@@ -9,6 +9,7 @@ import {
   verifyRefreshToken
 } from "../utils/tokens";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { env } from "../config/env";
 
 const registerSchema = z.object({
   name: z.string().min(1).max(100),
@@ -58,9 +59,9 @@ export async function register(req: Request, res: Response): Promise<void> {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     res.status(201).json({
@@ -109,7 +110,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
@@ -164,7 +165,7 @@ export async function refreshToken(
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000
     });

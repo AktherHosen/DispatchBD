@@ -2,8 +2,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { env } from "./config/env";
 import authRoutes from "./routes/auth.routes";
 import storeConnectionRoutes from "./routes/storeConnection.routes";
 import storeOrderRoutes from "./routes/storeOrder.routes";
@@ -18,14 +18,12 @@ import memberRoutes from "./routes/member.routes";
 import { apiLimiter } from "./middlewares/rateLimit.middleware";
 import { Plan } from "./models/Subscription";
 
-dotenv.config();
-
 const app = express();
 
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: env.CLIENT_URL,
     credentials: true
   })
 );
@@ -68,9 +66,8 @@ app.use("/api/dashboard", dashboardRoutes);
 // Member routes
 app.use("/api/members", memberRoutes);
 
-const port = process.env.PORT || 5000;
-const mongoUri =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/dispatchbd";
+const port = env.PORT;
+const mongoUri = env.MONGODB_URI;
 
 async function seedPlans() {
   const count = await Plan.countDocuments();
