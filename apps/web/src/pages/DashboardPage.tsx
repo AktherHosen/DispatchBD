@@ -192,9 +192,46 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Courier analytics coming soon
-              </p>
+              {isLoading ? (
+                <div className="grid gap-4 md:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-24" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="rounded-lg border p-4">
+                      <p className="text-sm text-muted-foreground">Total Sent</p>
+                      <p className="text-2xl font-bold">{(data as any)?.courierPerformance?.total ?? 0}</p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <p className="text-sm text-muted-foreground">Delivered</p>
+                      <p className="text-2xl font-bold text-green-600">{(data as any)?.courierPerformance?.delivered ?? 0}</p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <p className="text-sm text-muted-foreground">Success Rate</p>
+                      <p className="text-2xl font-bold">{(data as any)?.courierPerformance?.successRate ?? 0}%</p>
+                    </div>
+                  </div>
+                  {(data as any)?.courierPerformance?.byStatus?.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">By Status</p>
+                      {(data as any).courierPerformance.byStatus.map((s: any) => (
+                        <div key={s.status} className="flex items-center justify-between py-2 border-b last:border-0">
+                          <Badge variant={s.status === "delivered" ? "default" : "secondary"}>
+                            {s.status.replace("_", " ")}
+                          </Badge>
+                          <div className="flex items-center gap-4 text-sm">
+                            <span>{s.count} orders</span>
+                            <span className="text-muted-foreground">৳{s.totalAmount.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

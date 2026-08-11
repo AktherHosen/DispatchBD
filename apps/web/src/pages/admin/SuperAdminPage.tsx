@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -23,65 +24,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
-import { Building2, Users, User, Ban, CheckCircle, MoreHorizontal, Eye, Mail } from "lucide-react";
-
-const stats = [
-  {
-    title: "Total Workspaces",
-    value: "45",
-    icon: Building2,
-    description: "+5 this month"
-  },
-  {
-    title: "Total Users",
-    value: "128",
-    icon: Users,
-    description: "+12 this month"
-  },
-  {
-    title: "Active Members",
-    value: "89",
-    icon: User,
-    description: "69.5% of users"
-  }
-];
-
-const workspaces = [
-  {
-    id: "1",
-    name: "Fashion BD",
-    owner: "Rahim Uddin",
-    email: "rahim@fashionbd.com",
-    status: "active",
-    plan: "Pro",
-    members: 5,
-    orders: 156,
-    createdAt: "2024-01-01"
-  },
-  {
-    id: "2",
-    name: "Tech Store",
-    owner: "Karim Ahmed",
-    email: "karim@techstore.com",
-    status: "active",
-    plan: "Free",
-    members: 2,
-    orders: 45,
-    createdAt: "2024-01-05"
-  },
-  {
-    id: "3",
-    name: "Home Needs",
-    owner: "Fatima Begum",
-    email: "fatima@homeneeds.com",
-    status: "suspended",
-    plan: "Free",
-    members: 1,
-    orders: 12,
-    createdAt: "2024-01-10"
-  }
-];
+import { useGetSuperAdminStatsQuery, useGetAdminWorkspacesQuery, useSuspendWorkspaceMutation, useReactivateWorkspaceMutation } from "@/store/api";
+import { Building2, Users, User, Ban, CheckCircle, MoreHorizontal, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -105,6 +53,34 @@ function getStatusBadge(status: string) {
 }
 
 export default function SuperAdminPage() {
+  const [page, setPage] = useState(1);
+  const { data: statsData, isLoading: statsLoading } = useGetSuperAdminStatsQuery();
+  const { data: wsData, isLoading: wsLoading } = useGetAdminWorkspacesQuery({ page, limit: 10 });
+  const [suspendWorkspace] = useSuspendWorkspaceMutation();
+  const [reactivateWorkspace] = useReactivateWorkspaceMutation();
+
+  const stats = statsData?.stats;
+  const workspaces = wsData?.workspaces || [];
+  const pagination = wsData?.pagination;
+
+  const handleSuspend = async (id: string) => {
+    try {
+      await suspendWorkspace(id).unwrap();
+      toast.success("Workspace suspended");
+    } catch {
+      toast.error("Failed to suspend workspace");
+    }
+  };
+
+  const handleReactivate = async (id: string) => {
+    try {
+      await reactivateWorkspace(id).unwrap();
+      toast.success("Workspace reactivated");
+    } catch {
+      toast.error("Failed to reactivate workspace");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AppBreadcrumb items={[{ label: "Super Admin" }]} />
@@ -117,20 +93,50 @@ export default function SuperAdminPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {statsLoading ? (
+          [1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-3 w-20 mt-1" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Workspaces</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.totalWorkspaces ?? 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.totalUsers ?? 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+                <User className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.totalMembers ?? 0}</div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <Tabs defaultValue={0} className="space-y-4">
@@ -149,67 +155,103 @@ export default function SuperAdminPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Members</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {workspaces.map((ws) => (
-                    <TableRow key={ws.id}>
-                      <TableCell className="font-medium">{ws.name}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm">{ws.owner}</p>
-                          <p className="text-xs text-muted-foreground">{ws.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{ws.plan}</Badge>
-                      </TableCell>
-                      <TableCell>{ws.members}</TableCell>
-                      <TableCell>{ws.orders}</TableCell>
-                      <TableCell>{getStatusBadge(ws.status)}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Mail className="mr-2 h-4 w-4" />
-                              Contact Owner
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {ws.status === "active" ? (
-                              <DropdownMenuItem className="text-destructive">
-                                <Ban className="mr-2 h-4 w-4" />
-                                Suspend
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Reactivate
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+              {wsLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-5 w-14 rounded-full" />
+                      <Skeleton className="h-4 w-8" />
+                      <Skeleton className="h-4 w-8" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {workspaces.map((ws) => (
+                        <TableRow key={ws._id}>
+                          <TableCell className="font-medium">{ws.name}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm">{ws.ownerId?.name ?? "—"}</p>
+                              <p className="text-xs text-muted-foreground">{ws.ownerId?.email ?? "—"}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{new Date(ws.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell>{getStatusBadge("active")}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => handleSuspend(ws._id)}
+                                >
+                                  <Ban className="mr-2 h-4 w-4" />
+                                  Suspend
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleReactivate(ws._id)}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Reactivate
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {pagination && pagination.totalPages > 1 && (
+                    <div className="flex justify-center mt-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setPage(p => Math.max(1, p - 1))}
+                              className={page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                            const start = Math.max(1, Math.min(page - 2, pagination.totalPages - 4));
+                            return start + i;
+                          }).filter(p => p <= pagination.totalPages).map((p) => (
+                            <PaginationItem key={p}>
+                              <PaginationLink
+                                onClick={() => setPage(p)}
+                                isActive={p === page}
+                                className="cursor-pointer"
+                              >
+                                {p}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                              className={page >= pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

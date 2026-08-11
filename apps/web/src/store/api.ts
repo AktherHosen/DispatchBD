@@ -433,6 +433,27 @@ export const api = createApi({
     removeMember: builder.mutation<void, string>({
       query: (id) => ({ url: `/members/${id}`, method: "DELETE" }),
       invalidatesTags: ["Member"]
+    }),
+
+    // Super Admin
+    getSuperAdminStats: builder.query<{ stats: { totalWorkspaces: number; totalUsers: number; totalMembers: number } }, void>({
+      query: () => "/admin/stats",
+      providesTags: ["StoreConnection", "CourierConnection", "StoreOrder", "CourierOrder"]
+    }),
+    getAdminWorkspaces: builder.query<{ workspaces: Array<{ _id: string; name: string; slug: string; ownerId: { name: string; email: string }; createdAt: string }>; pagination: { page: number; limit: number; total: number; totalPages: number } }, { page?: number; limit?: number }>({
+      query: (params) => ({
+        url: "/admin/workspaces",
+        params: Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined))
+      }),
+      providesTags: ["Workspace"]
+    }),
+    suspendWorkspace: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/admin/workspaces/${id}/suspend`, method: "POST" }),
+      invalidatesTags: ["Workspace"]
+    }),
+    reactivateWorkspace: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/admin/workspaces/${id}/reactivate`, method: "POST" }),
+      invalidatesTags: ["Workspace"]
     })
   })
 });
@@ -504,5 +525,11 @@ export const {
   useGetMembersQuery,
   useInviteMemberMutation,
   useUpdateMemberRoleMutation,
-  useRemoveMemberMutation
+  useRemoveMemberMutation,
+
+  // Super Admin
+  useGetSuperAdminStatsQuery,
+  useGetAdminWorkspacesQuery,
+  useSuspendWorkspaceMutation,
+  useReactivateWorkspaceMutation
 } = api;

@@ -165,38 +165,40 @@ export default function PlansPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Invoice History</CardTitle>
-                  <CardDescription>Download your past invoices</CardDescription>
+                  <CardTitle>Billing History</CardTitle>
+                  <CardDescription>Your subscription and billing details</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" disabled>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download All
-                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {invoices.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No invoices yet</p>
+              {!subData?.subscription ? (
+                <p className="text-center text-muted-foreground py-8">
+                  You are on the Free plan. Upgrade to a paid plan for invoicing.
+                </p>
               ) : (
                 <div className="space-y-4">
-                  {invoices.map((invoice) => (
-                    <div
-                      key={invoice.id}
-                      className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-                    >
-                      <div className="flex items-center gap-4">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">{invoice.id}</p>
-                          <p className="text-xs text-muted-foreground">{invoice.date}</p>
-                        </div>
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{subData.subscription.planId?.name || "Plan"}</p>
+                        <p className="text-sm text-muted-foreground">Current subscription</p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-sm font-medium">{invoice.amount}</p>
-                        <Badge variant="outline">{invoice.status}</Badge>
+                      <Badge className="bg-green-500">{subData.subscription.status}</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Period Start</p>
+                        <p className="font-medium">{new Date(subData.subscription.currentPeriodStart).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Period End</p>
+                        <p className="font-medium">{new Date(subData.subscription.currentPeriodEnd).toLocaleDateString()}</p>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Invoices will appear here once payment processing is integrated.
+                  </p>
                 </div>
               )}
             </CardContent>

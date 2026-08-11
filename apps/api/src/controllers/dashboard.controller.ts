@@ -18,7 +18,8 @@ export async function getDashboardStats(
       courierConnections,
       deliveredOrders,
       totalRevenue,
-      recentOrders
+      recentOrders,
+      courierStats
     ] = await Promise.all([
       StoreOrder.countDocuments({ workspaceId }),
       StoreConnection.countDocuments({ workspaceId, status: "active" }),
@@ -31,11 +32,27 @@ export async function getDashboardStats(
       StoreOrder.find({ workspaceId })
         .sort({ createdAt: -1 })
         .limit(10)
-        .select("orderNumber customerName total status createdAt")
+        .select("orderNumber customerName total status createdAt"),
+      CourierOrder.aggregate([
+        { $match: { workspaceId: workspaceId as any } },
+        { $group: { _id: "$status", count: { $sum: 1 }, totalAmount: { $sum: "$amount" } } }
+      ])
     ]);
 
     const successRate = totalOrders > 0
       ? Math.round((deliveredOrders / totalOrders) * 100 * 10) / 10
+      : 0;
+
+    const courierPerformance = courierStats.map(s => ({
+      status: s._id,
+      count: s.count,
+      totalAmount: s.totalAmount
+    }));
+
+    const totalCourierOrders = courierStats.reduce((sum, s) => sum + s.count, 0);
+    const deliveredCourierOrders = courierStats.find(s => s._id === "delivered")?.count || 0;
+    const courierSuccessRate = totalCourierOrders > 0
+      ? Math.round((deliveredCourierOrders / totalCourierOrders) * 100 * 10) / 10
       : 0;
 
     res.json({
@@ -46,7 +63,13 @@ export async function getDashboardStats(
         totalRevenue: totalRevenue[0]?.total || 0,
         successRate
       },
-      recentOrders
+      recentOrders,
+      courierPerformance: {
+        total: totalCourierOrders,
+        delivered: deliveredCourierOrders,
+        successRate: courierSuccessRate,
+        byStatus: courierPerformance
+      }
     });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
