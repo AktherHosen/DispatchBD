@@ -28,6 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
+import { EmptyState } from "@/components/EmptyState";
 import { useGetStoreConnectionsQuery, useDeleteStoreConnectionMutation, useTestStoreConnectionMutation, useSyncStoreOrdersMutation } from "@/store/api";
 import { Plus, Store, ExternalLink, RefreshCw, MoreHorizontal, Pencil, Trash2, Eye, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -141,11 +142,12 @@ export default function StoreConnectionsPage() {
               ))}
             </div>
           ) : connections.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                No store connections yet. Click "Add Store" to get started.
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Store}
+              title="No store connections"
+              description="Connect your WooCommerce store to start syncing orders."
+              action={{ label: "Add Store", onClick: () => window.location.href = "/stores/new" }}
+            />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {connections.map((conn) => (

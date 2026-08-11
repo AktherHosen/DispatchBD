@@ -10,9 +10,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
+import { EmptyState } from "@/components/EmptyState";
 import { useGetStoreOrdersQuery, useSyncStoreOrdersMutation, useSendToCourierMutation, useGetCourierConnectionsQuery } from "@/store/api";
 import { useGetStoreConnectionsQuery } from "@/store/api";
-import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle, Loader2, Truck } from "lucide-react";
+import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle, Loader2, Truck, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
 function getStatusBadge(status: string) {
@@ -58,8 +59,9 @@ export default function StoreOrdersPage() {
   const handleSync = async (storeConnectionId: string) => {
     try {
       await syncOrders(storeConnectionId).unwrap();
+      toast.success("Orders synced successfully");
     } catch {
-      // error handled by RTK Query
+      toast.error("Failed to sync orders");
     }
   };
 
@@ -70,11 +72,12 @@ export default function StoreOrdersPage() {
         storeOrderId: selectedOrder,
         courierConnectionId: selectedCourier
       }).unwrap();
+      toast.success("Order sent to courier");
       setSendDialogOpen(false);
       setSelectedOrder(null);
       setSelectedCourier("");
     } catch {
-      // error handled by RTK Query
+      toast.error("Failed to send order to courier");
     }
   };
 
@@ -157,7 +160,11 @@ export default function StoreOrdersPage() {
               ))}
             </div>
           ) : orders.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No orders found</p>
+            <EmptyState
+              icon={ShoppingBag}
+              title="No orders found"
+              description="Orders will appear here once you sync them from your connected stores."
+            />
           ) : (
             <>
               <Table>

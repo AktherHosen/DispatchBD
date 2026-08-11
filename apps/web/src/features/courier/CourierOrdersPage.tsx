@@ -9,8 +9,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
+import { EmptyState } from "@/components/EmptyState";
 import { useGetCourierOrdersQuery } from "@/store/api";
-import { Search, Eye, MoreHorizontal, MapPin, AlertCircle } from "lucide-react";
+import { Search, Eye, MoreHorizontal, MapPin, AlertCircle, Truck } from "lucide-react";
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -108,7 +109,11 @@ export default function CourierOrdersPage() {
               ))}
             </div>
           ) : filteredOrders.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No courier orders found</p>
+            <EmptyState
+              icon={Truck}
+              title="No courier orders"
+              description="Orders will appear here once you send them to a courier from the store orders page."
+            />
           ) : (
             <Table>
               <TableHeader>
