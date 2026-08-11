@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -12,9 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { EmptyState } from "@/components/EmptyState";
-import { useGetStoreOrdersQuery, useSyncStoreOrdersMutation, useSendToCourierMutation, useGetCourierConnectionsQuery } from "@/store/api";
+import { useGetStoreOrdersQuery, useSyncStoreOrdersMutation, useSendToCourierMutation, useBulkSendToCourierMutation, useGetCourierConnectionsQuery, useAddOrderNoteMutation } from "@/store/api";
 import { useGetStoreConnectionsQuery } from "@/store/api";
-import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle, Loader2, Truck, ShoppingBag, Download } from "lucide-react";
+import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle, Loader2, Truck, ShoppingBag, Download, CheckSquare } from "lucide-react";
 import { toast } from "sonner";
 
 function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
@@ -77,6 +78,10 @@ export default function StoreOrdersPage() {
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
   const [selectedCourier, setSelectedCourier] = useState("");
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [bulkSendDialogOpen, setBulkSendDialogOpen] = useState(false);
+  const [bulkCourier, setBulkCourier] = useState("");
+  const [bulkSendToCourier, { isLoading: isBulkSending }] = useBulkSendToCourierMutation();
 
   const handleSync = async (storeConnectionId: string) => {
     try {
@@ -107,6 +112,43 @@ export default function StoreOrdersPage() {
     setSelectedOrder(orderId);
     setSelectedCourier("");
     setSendDialogOpen(true);
+  };
+
+  const toggleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const orders = data?.orders ?? [];
+    if (selectedOrders.size === orders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(orders.map(o => o._id)));
+    }
+  };
+
+  const handleBulkSend = async () => {
+    if (!bulkCourier || selectedOrders.size === 0) return;
+    try {
+      await bulkSendToCourier({
+        orderIds: Array.from(selectedOrders),
+        courierConnectionId: bulkCourier
+      }).unwrap();
+      toast.success(`${selectedOrders.size} orders sent to courier`);
+      setBulkSendDialogOpen(false);
+      setSelectedOrders(new Set());
+      setBulkCourier("");
+    } catch {
+      toast.error("Failed to bulk send orders");
+    }
   };
 
   const orders = data?.orders ?? [];
@@ -188,6 +230,12 @@ export default function StoreOrdersPage() {
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
+              {selectedOrders.size > 0 && (
+                <Button variant="default" size="sm" onClick={() => setBulkSendDialogOpen(true)}>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send ({selectedOrders.size})
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -196,6 +244,7 @@ export default function StoreOrdersPage() {
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                  <Skeleton className="h-4 w-4" />
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-4 w-24" />
@@ -217,6 +266,14 @@ export default function StoreOrdersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <input
+                        type="checkbox"
+                        checked={orders.length > 0 && selectedOrders.size === orders.length}
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4"
+                      />
+                    </TableHead>
                     <TableHead>Order #</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead>Phone</TableHead>
@@ -229,6 +286,14 @@ export default function StoreOrdersPage() {
                 <TableBody>
                   {orders.map((order) => (
                     <TableRow key={order._id}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={selectedOrders.has(order._id)}
+                          onChange={() => toggleSelectOrder(order._id)}
+                          className="h-4 w-4"
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{order.orderNumber}</TableCell>
                       <TableCell>{order.customerName}</TableCell>
                       <TableCell>{order.customerPhone}</TableCell>
@@ -318,6 +383,48 @@ export default function StoreOrdersPage() {
                 <>
                   <Truck className="mr-2 h-4 w-4" />
                   Send Order
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkSendDialogOpen} onOpenChange={setBulkSendDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send {selectedOrders.size} Orders to Courier</DialogTitle>
+            <DialogDescription>Select a courier to send all selected orders.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Courier</Label>
+              <Select value={bulkCourier} onValueChange={(v) => setBulkCourier(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select courier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(courierData?.connections ?? []).map((c) => (
+                    <SelectItem key={c._id} value={c._id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkSendDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleBulkSend} disabled={!bulkCourier || isBulkSending}>
+              {isBulkSending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Send {selectedOrders.size} Orders
                 </>
               )}
             </Button>

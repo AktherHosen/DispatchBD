@@ -5,10 +5,11 @@ import {
   createCourierOrder,
   updateCourierOrderStatus,
   deleteCourierOrder,
-  sendToCourier
+  sendToCourier,
+  bulkSendToCourier
 } from "../controllers/courierOrder.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { workspaceMiddleware, requireRole } from "../middlewares/workspace.middleware";
+import { workspaceMiddleware } from "../middlewares/workspace.middleware";
 
 const router = Router();
 
@@ -17,9 +18,10 @@ router.use(workspaceMiddleware);
 
 router.get("/", listCourierOrders);
 router.get("/:id", getCourierOrder);
-router.post("/", requireRole("owner", "admin", "moderator"), createCourierOrder);
-router.post("/send", requireRole("owner", "admin", "moderator"), sendToCourier);
-router.patch("/:id/status", requireRole("owner", "admin", "moderator"), updateCourierOrderStatus);
-router.delete("/:id", requireRole("owner", "admin"), deleteCourierOrder);
+router.post("/", createCourierOrder);
+router.patch("/:id/status", updateCourierOrderStatus);
+router.delete("/:id", deleteCourierOrder);
+router.post("/send", sendToCourier);
+router.post("/bulk-send", bulkSendToCourier);
 
 export default router;

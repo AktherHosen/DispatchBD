@@ -14,37 +14,42 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
+import { useCreateStoreConnectionMutation } from "@/store/api";
 import { ArrowLeft, Loader2, Store } from "lucide-react";
+import { toast } from "sonner";
 
 export default function StoreConnectionCreatePage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [createConnection, { isLoading }] = useCreateStoreConnectionMutation();
   const [form, setForm] = useState({
     name: "",
     storeUrl: "",
     consumerKey: "",
-    consumerSecret: "",
-    description: ""
+    consumerSecret: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // TODO: API call
-    console.log(form);
-    setLoading(false);
-    navigate("/stores");
+    try {
+      await createConnection({
+        name: form.name,
+        storeUrl: form.storeUrl,
+        consumerKey: form.consumerKey,
+        consumerSecret: form.consumerSecret,
+        platform: "woocommerce"
+      }).unwrap();
+      toast.success("Store connection created");
+      navigate("/stores");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to create connection");
+    }
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <AppBreadcrumb items={[{ label: "Stores", href: "/stores" }, { label: "Add Store" }]} />
       <div>
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/stores")}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => navigate("/stores")} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Stores
         </Button>
@@ -103,9 +108,7 @@ export default function StoreConnectionCreatePage() {
                 id="consumerKey"
                 placeholder="ck_..."
                 value={form.consumerKey}
-                onChange={(e) =>
-                  setForm({ ...form, consumerKey: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, consumerKey: e.target.value })}
                 required
               />
             </div>
@@ -117,35 +120,17 @@ export default function StoreConnectionCreatePage() {
                 type="password"
                 placeholder="cs_..."
                 value={form.consumerSecret}
-                onChange={(e) =>
-                  setForm({ ...form, consumerSecret: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, consumerSecret: e.target.value })}
                 required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
-                placeholder="Add any notes about this connection..."
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
               />
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/stores")}
-            >
+            <Button type="button" variant="outline" onClick={() => navigate("/stores")}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Connecting...

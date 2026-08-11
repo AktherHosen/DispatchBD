@@ -9,6 +9,10 @@ const updateStatusSchema = z.object({
   status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled", "returned"])
 });
 
+const addNoteSchema = z.object({
+  text: z.string().min(1).max(500)
+});
+
 const listQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
@@ -213,4 +217,45 @@ function mapWooCommerceStatus(status: string): OrderStatus {
     failed: "cancelled"
   };
   return statusMap[status] || "pending";
+}
+
+export async function addOrderNote(
+  req: WorkspaceAuthRequest,
+  res: Response
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const parsed = addNoteSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error.issues[0].message });
+      return;
+    }
+
+    const order = await StoreOrder.findOneAndUpdate(
+      { _id: req.params.id, workspaceId: req.workspaceId },
+      {
+        $push: {
+          internalNotes: {
+            text: parsed.data.text,
+            author: req.user.name || req.user.email,
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+
+    if (!order) {
+      res.status(404).json({ message: "Order not found" });
+      return;
+    }
+
+    res.json({ order });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
 }

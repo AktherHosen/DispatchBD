@@ -33,8 +33,18 @@ app.use(cookieParser());
 // Apply rate limiting to all API routes
 app.use("/api", apiLimiter);
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
+app.get("/health", async (_req, res) => {
+  const mongoState = mongoose.connection.readyState;
+  const mongoOk = mongoState === 1;
+  res.json({
+    status: mongoOk ? "ok" : "degraded",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    services: {
+      api: "ok",
+      database: mongoOk ? "connected" : "disconnected"
+    }
+  });
 });
 
 // Auth routes

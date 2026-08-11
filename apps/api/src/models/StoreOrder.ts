@@ -11,7 +11,7 @@ export type OrderStatus =
 export interface IStoreOrder extends Document {
   workspaceId: mongoose.Types.ObjectId;
   storeConnectionId: mongoose.Types.ObjectId;
- wooCommerceId: number;
+  wooCommerceId: number;
   orderNumber: string;
   status: OrderStatus;
   customerName: string;
@@ -28,6 +28,7 @@ export interface IStoreOrder extends Document {
   total: number;
   currency: string;
   note?: string;
+  internalNotes: Array<{ text: string; author: string; createdAt: Date }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -100,7 +101,14 @@ const storeOrderSchema = new Schema<IStoreOrder>(
     },
     note: {
       type: String
-    }
+    },
+    internalNotes: [
+      {
+        text: { type: String, required: true },
+        author: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   {
     timestamps: true

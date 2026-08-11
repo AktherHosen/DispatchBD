@@ -79,6 +79,8 @@ interface StoreConnection {
   name: string;
   platform: string;
   storeUrl: string;
+  consumerKey: string;
+  consumerSecret: string;
   status: "active" | "inactive" | "error";
   lastSyncAt?: string;
   createdAt: string;
@@ -225,6 +227,19 @@ export const api = createApi({
       query: () => ({ url: "/auth/logout", method: "POST" }),
       invalidatesTags: ["User"]
     }),
+    changePassword: builder.mutation<{ message: string }, { currentPassword: string; newPassword: string }>({
+      query: (body) => ({ url: "/auth/change-password", method: "PUT", body })
+    }),
+    updateProfile: builder.mutation<{ user: User }, { name?: string; email?: string }>({
+      query: (body) => ({ url: "/auth/profile", method: "PUT", body }),
+      invalidatesTags: ["User"]
+    }),
+    requestPasswordReset: builder.mutation<{ message: string }, { email: string }>({
+      query: (body) => ({ url: "/auth/forgot-password", method: "POST", body })
+    }),
+    resetPassword: builder.mutation<{ message: string }, { token: string; newPassword: string }>({
+      query: (body) => ({ url: "/auth/reset-password", method: "POST", body })
+    }),
     getMe: builder.query<MeResponse, void>({
       query: () => "/auth/me",
       providesTags: ["User"]
@@ -312,6 +327,14 @@ export const api = createApi({
     sendToCourier: builder.mutation<{ order: CourierOrder; consignmentId: string }, { storeOrderId: string; courierConnectionId: string; note?: string }>({
       query: (body) => ({ url: "/courier-orders/send", method: "POST", body }),
       invalidatesTags: ["CourierOrder", "StoreOrder"]
+    }),
+    bulkSendToCourier: builder.mutation<{ message: string; results: Array<{ orderId: string; success: boolean; consignmentId?: string; error?: string }> }, { orderIds: string[]; courierConnectionId: string }>({
+      query: (body) => ({ url: "/courier-orders/bulk-send", method: "POST", body }),
+      invalidatesTags: ["CourierOrder", "StoreOrder"]
+    }),
+    addOrderNote: builder.mutation<{ order: any }, { id: string; text: string }>({
+      query: ({ id, text }) => ({ url: `/store-orders/${id}/notes`, method: "POST", body: { text } }),
+      invalidatesTags: ["StoreOrder"]
     }),
 
     // Store Orders
@@ -419,6 +442,10 @@ export const {
   useRegisterMutation,
   useLoginMutation,
   useLogoutMutation,
+  useChangePasswordMutation,
+  useUpdateProfileMutation,
+  useRequestPasswordResetMutation,
+  useResetPasswordMutation,
   useGetMeQuery,
   useGetUserWorkspacesQuery,
 
@@ -444,6 +471,8 @@ export const {
   useCreateCourierOrderMutation,
   useUpdateCourierOrderStatusMutation,
   useSendToCourierMutation,
+  useBulkSendToCourierMutation,
+  useAddOrderNoteMutation,
 
   // Store Orders
   useGetStoreOrdersQuery,

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
+import { Skeleton } from "@/components/ui/skeleton";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
 
@@ -9,8 +10,10 @@ const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const StoreConnectionsPage = lazy(() => import("@/features/store/StoreConnectionsPage"));
 const StoreConnectionCreatePage = lazy(() => import("@/features/store/StoreConnectionCreatePage"));
+const StoreConnectionEditPage = lazy(() => import("@/features/store/StoreConnectionEditPage"));
 const StoreOrdersPage = lazy(() => import("@/features/store/StoreOrdersPage"));
 const CourierConnectionsPage = lazy(() => import("@/features/courier/CourierConnectionsPage"));
+const CourierConnectionEditPage = lazy(() => import("@/features/courier/CourierConnectionEditPage"));
 const CourierOrdersPage = lazy(() => import("@/features/courier/CourierOrdersPage"));
 const ModeratorsPage = lazy(() => import("@/features/team/ModeratorsPage"));
 const FraudCheckPage = lazy(() => import("@/features/fraud/FraudCheckPage"));
@@ -22,8 +25,33 @@ const SuperAdminPage = lazy(() => import("@/pages/admin/SuperAdminPage"));
 
 function PageLoader() {
   return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    <div className="flex h-screen bg-background">
+      <div className="hidden md:flex w-64 flex-col border-r bg-sidebar p-4 space-y-6">
+        <Skeleton className="h-6 w-32" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-full rounded-md" />
+          <Skeleton className="h-8 w-full rounded-md" />
+          <Skeleton className="h-8 w-full rounded-md" />
+          <Skeleton className="h-8 w-full rounded-md" />
+        </div>
+      </div>
+      <div className="flex-1 flex flex-col">
+        <div className="h-14 border-b flex items-center px-6 gap-4">
+          <Skeleton className="h-6 w-6" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="flex-1 p-6 space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Skeleton className="h-28 rounded-lg" />
+            <Skeleton className="h-28 rounded-lg" />
+            <Skeleton className="h-28 rounded-lg" />
+            <Skeleton className="h-28 rounded-lg" />
+          </div>
+          <Skeleton className="h-64 rounded-lg" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -93,6 +121,16 @@ export default function App() {
             }
           />
           <Route
+            path="/stores/:id/edit"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <StoreConnectionEditPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/stores/orders"
             element={
               <ProtectedRoute>
@@ -120,6 +158,16 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <CourierConnectionsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/couriers/:id/edit"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <CourierConnectionEditPage />
                 </AppLayout>
               </ProtectedRoute>
             }

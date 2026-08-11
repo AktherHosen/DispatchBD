@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +33,7 @@ function getStatusBadge(status: string) {
 }
 
 export default function CourierConnectionsPage() {
+  const navigate = useNavigate();
   const { data, isLoading, error } = useGetCourierConnectionsQuery();
   const [deleteConnection] = useDeleteCourierConnectionMutation();
   const [testConnection] = useTestCourierConnectionMutation();
@@ -112,7 +115,7 @@ export default function CourierConnectionsPage() {
                       <MoreHorizontal className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/couriers/${conn._id}/edit`)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>

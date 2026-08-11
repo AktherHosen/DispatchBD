@@ -282,3 +282,120 @@ export async function sendToCourier(
     res.status(500).json({ message: "Failed to send order to courier" });
   }
 }
+
+const bulkSendSchema = z.object({
+  orderIds: z.array(z.string()).min(1).max(50),
+  courierConnectionId: z.string()
+});
+
+export async function bulkSendToCourier(
+  req: WorkspaceAuthRequest,
+  res: Response
+): Promise<void> {
+  try {
+    const parsed = bulkSendSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error.issues[0].message });
+      return;
+    }
+
+    const { orderIds, courierConnectionId } = parsed.data;
+
+    const courier = await CourierConnection.findOne({
+      _id: courierConnectionId,
+      workspaceId: req.workspaceId
+    });
+
+    if (!courier) {
+      res.status(404).json({ message: "Courier connection not found" });
+      return;
+    }
+
+    if (courier.status !== "active") {
+      res.status(400).json({ message: "Courier connection is not active" });
+      return;
+    }
+
+    const storeOrders = await StoreOrder.find({
+      _id: { $in: orderIds },
+      workspaceId: req.workspaceId
+    });
+
+    const results: Array<{ orderId: string; success: boolean; consignmentId?: string; error?: string }> = [];
+
+    for (const storeOrder of storeOrders) {
+      const existing = await CourierOrder.findOne({
+        storeOrderId: storeOrder._id,
+        workspaceId: req.workspaceId
+      });
+
+      if (existing) {
+        results.push({
+          orderId: storeOrder._id.toString(),
+          success: false,
+          error: "Already sent to courier"
+        });
+        continue;
+      }
+
+      const orderData = {
+        orderNumber: storeOrder.orderNumber,
+        customerName: storeOrder.customerName,
+        customerPhone: storeOrder.customerPhone,
+        customerAddress: storeOrder.shippingAddress,
+        customerCity: storeOrder.shippingCity,
+        amount: storeOrder.total,
+        note: storeOrder.note
+      };
+
+      let result;
+      const courierName = courier.name.toLowerCase();
+
+      if (courierName.includes("steadfast")) {
+        result = await submitToSteadfast(courier.apiKey, courier.apiSecret, orderData);
+      } else if (courierName.includes("pathao")) {
+        result = await submitToPathao(courier.apiKey, courier.apiSecret, orderData);
+      } else {
+        result = {
+          success: true,
+          consignmentId: `EXT-${storeOrder.orderNumber}`,
+          message: "Order queued (generic courier)"
+        };
+      }
+
+      if (!result.success) {
+        results.push({
+          orderId: storeOrder._id.toString(),
+          success: false,
+          error: result.message
+        });
+        continue;
+      }
+
+      await CourierOrder.create({
+        workspaceId: req.workspaceId,
+        courierConnectionId: courier._id,
+        storeOrderId: storeOrder._id,
+        consignmentId: result.consignmentId,
+        status: "pending",
+        amount: storeOrder.total,
+        codAmount: storeOrder.total,
+        statusHistory: [{ status: "pending", timestamp: new Date(), note: "Order created" }]
+      });
+
+      results.push({
+        orderId: storeOrder._id.toString(),
+        success: true,
+        consignmentId: result.consignmentId
+      });
+    }
+
+    const sent = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+
+    res.json({ message: `Bulk send completed: ${sent} sent, ${failed} failed`, results });
+  } catch (error) {
+    console.error("Bulk send error:", error);
+    res.status(500).json({ message: "Failed to bulk send orders" });
+  }
+}
