@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import authRoutes from "./routes/auth.routes";
 
 dotenv.config();
 
@@ -16,10 +18,13 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use("/api/auth", authRoutes);
 
 const port = process.env.PORT || 5000;
 const mongoUri =
