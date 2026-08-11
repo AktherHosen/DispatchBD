@@ -14,6 +14,7 @@ import apiKeyRoutes from "./routes/apiKey.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import superAdminRoutes from "./routes/superAdmin.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import memberRoutes from "./routes/member.routes";
 import { apiLimiter } from "./middlewares/rateLimit.middleware";
 import { Plan } from "./models/Subscription";
 
@@ -63,6 +64,9 @@ app.use("/api/admin", superAdminRoutes);
 
 // Dashboard routes
 app.use("/api/dashboard", dashboardRoutes);
+
+// Member routes
+app.use("/api/members", memberRoutes);
 
 const port = process.env.PORT || 5000;
 const mongoUri =

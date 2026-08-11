@@ -10,6 +10,7 @@ import StoreConnectionCreatePage from "@/features/store/StoreConnectionCreatePag
 import StoreOrdersPage from "@/features/store/StoreOrdersPage";
 import CourierConnectionsPage from "@/features/courier/CourierConnectionsPage";
 import CourierOrdersPage from "@/features/courier/CourierOrdersPage";
+import ModeratorsPage from "@/features/team/ModeratorsPage";
 import FraudCheckPage from "@/features/fraud/FraudCheckPage";
 import PlansPage from "@/features/billing/PlansPage";
 import ApiKeysPage from "@/features/api-keys/ApiKeysPage";
@@ -130,7 +131,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AppLayout>
-                <div className="text-2xl font-bold">Moderators - Coming Soon</div>
+                <ModeratorsPage />
               </AppLayout>
             </ProtectedRoute>
           }

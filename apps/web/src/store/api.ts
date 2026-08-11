@@ -185,6 +185,15 @@ interface Subscription {
   currentPeriodEnd: string;
 }
 
+interface Member {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: "owner" | "admin" | "moderator";
+  joinedAt: string;
+}
+
 export const api = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithReauth,
@@ -198,7 +207,8 @@ export const api = createApi({
     "FraudCheck",
     "ApiKey",
     "Plan",
-    "Subscription"
+    "Subscription",
+    "Member"
   ],
   endpoints: (builder) => ({
     // Auth
@@ -378,6 +388,24 @@ export const api = createApi({
     cancelSubscription: builder.mutation<void, void>({
       query: () => ({ url: "/subscriptions/cancel", method: "POST" }),
       invalidatesTags: ["Subscription"]
+    }),
+
+    // Members
+    getMembers: builder.query<{ members: Member[] }, void>({
+      query: () => "/members",
+      providesTags: ["Member"]
+    }),
+    inviteMember: builder.mutation<{ member: Member }, { email: string; role?: string }>({
+      query: (body) => ({ url: "/members", method: "POST", body }),
+      invalidatesTags: ["Member"]
+    }),
+    updateMemberRole: builder.mutation<void, { id: string; role: string }>({
+      query: ({ id, role }) => ({ url: `/members/${id}/role`, method: "PATCH", body: { role } }),
+      invalidatesTags: ["Member"]
+    }),
+    removeMember: builder.mutation<void, string>({
+      query: (id) => ({ url: `/members/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Member"]
     })
   })
 });
@@ -437,5 +465,11 @@ export const {
   useGetPlansQuery,
   useGetSubscriptionQuery,
   useUpgradePlanMutation,
-  useCancelSubscriptionMutation
+  useCancelSubscriptionMutation,
+
+  // Members
+  useGetMembersQuery,
+  useInviteMemberMutation,
+  useUpdateMemberRoleMutation,
+  useRemoveMemberMutation
 } = api;
