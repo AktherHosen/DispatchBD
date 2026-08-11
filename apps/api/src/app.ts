@@ -13,6 +13,7 @@ import fraudCheckRoutes from "./routes/fraudCheck.routes";
 import apiKeyRoutes from "./routes/apiKey.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import superAdminRoutes from "./routes/superAdmin.routes";
+import { apiLimiter } from "./middlewares/rateLimit.middleware";
 
 dotenv.config();
 
@@ -27,6 +28,9 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+
+// Apply rate limiting to all API routes
+app.use("/api", apiLimiter);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

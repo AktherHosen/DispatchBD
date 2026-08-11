@@ -71,7 +71,7 @@ export async function register(req: Request, res: Response): Promise<void> {
         email: user.email
       },
       workspace: {
-        id: workspace._id,
+        id: workspace._id.toString(),
         name: workspace.name,
         slug: workspace.slug
       }
@@ -126,7 +126,9 @@ export async function login(req: Request, res: Response): Promise<void> {
         name: user.name,
         email: user.email
       },
-      workspace: member?.workspaceId || null
+      workspace: member?.workspaceId
+        ? { id: (member.workspaceId as any)._id.toString(), name: (member.workspaceId as any).name, slug: (member.workspaceId as any).slug }
+        : null
     });
   } catch (error) {
     console.error(error);
@@ -190,7 +192,9 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
         name: req.user.name,
         email: req.user.email
       },
-      workspace: member?.workspaceId || null
+      workspace: member?.workspaceId
+        ? { id: (member.workspaceId as any)._id.toString(), name: (member.workspaceId as any).name, slug: (member.workspaceId as any).slug }
+        : null
     });
   } catch (error) {
     res.status(500).json({ message: "Server error" });

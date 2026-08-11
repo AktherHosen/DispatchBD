@@ -26,23 +26,23 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs defaultValue={0} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="profile">
+          <TabsTrigger value={0}>
             <User className="h-4 w-4 mr-2" />
             Profile
           </TabsTrigger>
-          <TabsTrigger value="workspace">
+          <TabsTrigger value={1}>
             <Building2 className="h-4 w-4 mr-2" />
             Workspace
           </TabsTrigger>
-          <TabsTrigger value="security">
+          <TabsTrigger value={2}>
             <Lock className="h-4 w-4 mr-2" />
             Security
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="space-y-4">
+        <TabsContent value={0} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Profile</CardTitle>
@@ -75,7 +75,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="workspace" className="space-y-4">
+        <TabsContent value={1} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Workspace</CardTitle>
@@ -98,7 +98,7 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-4">
+        <TabsContent value={2} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Change Password</CardTitle>

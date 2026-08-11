@@ -1,5 +1,53 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "./store";
+import { setCredentials, logout } from "./authSlice";
+
+const baseQuery = fetchBaseQuery({
+  baseUrl: "http://localhost:5000/api",
+  credentials: "include",
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as RootState).auth.accessToken;
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+    const ws = (getState() as RootState).auth.workspace;
+    const workspaceId = ws?.id || (ws as any)?._id;
+    if (workspaceId) {
+      headers.set("x-workspace-id", String(workspaceId));
+    }
+    return headers;
+  }
+});
+
+const baseQueryWithReauth = async (args: string | { url: string; [key: string]: unknown }, api: Parameters<typeof baseQuery>[1], extraOptions: Record<string, unknown>) => {
+  let result = await baseQuery(args, api, extraOptions);
+
+  if (result.error && (result.error as { status: number }).status === 401) {
+    // Try to refresh token
+    const refreshResult = await baseQuery(
+      { url: "/auth/refresh", method: "POST" },
+      api,
+      extraOptions
+    );
+
+    if (refreshResult.data) {
+      const { accessToken } = refreshResult.data as { accessToken: string };
+      api.dispatch(setCredentials({
+        accessToken,
+        user: (api.getState() as RootState).auth.user!,
+        workspace: (api.getState() as RootState).auth.workspace!
+      }));
+
+      // Retry original request
+      result = await baseQuery(args, api, extraOptions);
+    } else {
+      // Refresh failed, logout
+      api.dispatch(logout());
+    }
+  }
+
+  return result;
+};
 
 // Types
 interface User {
@@ -101,21 +149,7 @@ interface Subscription {
 
 export const api = createApi({
   reducerPath: "api",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5000/api",
-    credentials: "include",
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as RootState).auth.accessToken;
-      if (token) {
-        headers.set("authorization", `Bearer ${token}`);
-      }
-      const workspaceId = (getState() as RootState).auth.workspace?.id;
-      if (workspaceId) {
-        headers.set("x-workspace-id", workspaceId);
-      }
-      return headers;
-    }
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: [
     "User",
     "Workspace",
@@ -220,7 +254,7 @@ export const api = createApi({
     }),
 
     // Fraud Check
-    checkPhone: builder.mutation<{ phone: string; riskLevel: string; totalOrders: number; successRate: number }, { phone: string }>({
+    checkPhone: builder.mutation<{ phone: string; riskLevel: string; totalOrders: number; successRate: number; provider: string }, { phone: string; courierConnectionId: string }>({
       query: (body) => ({ url: "/fraud/check", method: "POST", body }),
       invalidatesTags: ["FraudCheck"]
     }),

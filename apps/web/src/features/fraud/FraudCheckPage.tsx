@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -21,7 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
-import { useCheckPhoneMutation, useGetFraudChecksQuery, useGetFraudStatsQuery } from "@/store/api";
+import { useCheckPhoneMutation, useGetFraudChecksQuery, useGetFraudStatsQuery, useGetCourierConnectionsQuery } from "@/store/api";
 import { Search, Shield, AlertTriangle, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
 function getRiskBadge(level: string) {
@@ -54,21 +61,33 @@ function getRiskBadge(level: string) {
 
 export default function FraudCheckPage() {
   const [phone, setPhone] = useState("");
+  const [selectedCourier, setSelectedCourier] = useState("");
   const [search, setSearch] = useState("");
-  const [checkPhone, { isLoading: isChecking }] = useCheckPhoneMutation();
+  const [checkPhone, { isLoading: isChecking, error: checkError }] = useCheckPhoneMutation();
   const { data: fraudData, isLoading: isLoadingChecks } = useGetFraudChecksQuery({});
   const { data: stats, isLoading: isLoadingStats } = useGetFraudStatsQuery();
+  const { data: couriersData, isLoading: isLoadingCouriers } = useGetCourierConnectionsQuery();
 
   const fraudLogs = fraudData?.logs || [];
+  const courierConnections = couriersData?.connections || [];
+  const activeCouriers = courierConnections.filter((c) => c.status === "active");
 
   const handleCheck = async () => {
-    if (!phone) return;
+    if (!phone || !selectedCourier) return;
     try {
-      await checkPhone({ phone }).unwrap();
+      await checkPhone({ phone, courierConnectionId: selectedCourier }).unwrap();
       setPhone("");
     } catch (err) {
       console.error("Fraud check failed:", err);
     }
+  };
+
+  const getErrorMessage = () => {
+    if (!checkError) return null;
+    if ("data" in checkError) {
+      return (checkError.data as { message?: string })?.message || "Failed to check phone";
+    }
+    return "Failed to check phone";
   };
 
   return (
@@ -77,7 +96,7 @@ export default function FraudCheckPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Fraud Check</h1>
         <p className="text-muted-foreground">
-          Check phone number fraud risk before dispatching orders
+          Check phone number fraud risk using your connected courier APIs
         </p>
       </div>
 
@@ -89,31 +108,71 @@ export default function FraudCheckPage() {
             <CardTitle>Check Phone Number</CardTitle>
           </div>
           <CardDescription>
-            Enter a phone number to check its fraud risk level
+            Select a courier connection and enter a phone number to check its fraud risk level
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                placeholder="01XXXXXXXXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+          {activeCouriers.length === 0 && !isLoadingCouriers ? (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                No active courier connections found. Please add and activate a courier connection first.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              {checkError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{getErrorMessage()}</AlertDescription>
+                </Alert>
+              )}
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="courier">Courier Provider</Label>
+                  <Select value={selectedCourier} onValueChange={(v) => setSelectedCourier(v ?? "")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select courier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingCouriers ? (
+                        <SelectItem value="loading" disabled>Loading...</SelectItem>
+                      ) : (
+                        activeCouriers.map((courier) => (
+                          <SelectItem key={courier._id} value={courier._id}>
+                            {courier.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    placeholder="01XXXXXXXXX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    onClick={handleCheck} 
+                    disabled={isChecking || !phone || !selectedCourier}
+                    className="w-full"
+                  >
+                    {isChecking ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Shield className="h-4 w-4 mr-2" />
+                    )}
+                    Check Risk
+                  </Button>
+                </div>
+              </div>
             </div>
-            <div className="flex items-end">
-              <Button onClick={handleCheck} disabled={isChecking || !phone}>
-                {isChecking ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Shield className="h-4 w-4 mr-2" />
-                )}
-                Check Risk
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -202,13 +261,14 @@ export default function FraudCheckPage() {
                   <TableHead>Risk Level</TableHead>
                   <TableHead>Total Orders</TableHead>
                   <TableHead>Success Rate</TableHead>
+                  <TableHead>Checked By</TableHead>
                   <TableHead>Last Checked</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fraudLogs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       No fraud checks yet
                     </TableCell>
                   </TableRow>
@@ -221,6 +281,7 @@ export default function FraudCheckPage() {
                         <TableCell>{getRiskBadge(log.riskLevel)}</TableCell>
                         <TableCell>{log.totalOrders}</TableCell>
                         <TableCell>{log.successRate.toFixed(1)}%</TableCell>
+                        <TableCell>{log.checkedBy?.name || "Unknown"}</TableCell>
                         <TableCell>{new Date(log.createdAt).toLocaleDateString()}</TableCell>
                       </TableRow>
                     ))

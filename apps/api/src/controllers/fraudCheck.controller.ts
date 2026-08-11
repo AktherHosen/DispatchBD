@@ -1,10 +1,13 @@
 import { Response } from "express";
 import { z } from "zod";
 import { FraudCheckLog } from "../models/FraudCheckLog";
+import { CourierConnection } from "../models/CourierConnection";
 import { WorkspaceAuthRequest } from "../middlewares/workspace.middleware";
+import { checkPhoneFraud } from "../services/fraudCheck.service";
 
 const checkPhoneSchema = z.object({
-  phone: z.string().min(11).max(11)
+  phone: z.string().min(11).max(11),
+  courierConnectionId: z.string()
 });
 
 export async function checkPhone(
@@ -18,28 +21,41 @@ export async function checkPhone(
       return;
     }
 
-    const { phone } = parsed.data;
+    const { phone, courierConnectionId } = parsed.data;
 
-    // TODO: Implement actual fraud check logic with external API
-    // For now, simulate risk assessment
-    const totalOrders = Math.floor(Math.random() * 50);
-    const successRate = Math.random() * 100;
-    
-    let riskLevel: "low" | "medium" | "high" = "low";
-    if (successRate < 50) {
-      riskLevel = "high";
-    } else if (successRate < 75) {
-      riskLevel = "medium";
+    // Get courier connection credentials
+    const courierConnection = await CourierConnection.findOne({
+      _id: courierConnectionId,
+      workspaceId: req.workspaceId
+    });
+
+    if (!courierConnection) {
+      res.status(404).json({ message: "Courier connection not found" });
+      return;
     }
 
-    // Create or update fraud check log
+    if (courierConnection.status !== "active") {
+      res.status(400).json({ message: "Courier connection is not active" });
+      return;
+    }
+
+    // Check fraud using courier API
+    const result = await checkPhoneFraud(
+      phone,
+      courierConnection.name,
+      courierConnection.apiEndpoint,
+      courierConnection.apiKey,
+      courierConnection.apiSecret
+    );
+
+    // Save to fraud check log
     const log = await FraudCheckLog.findOneAndUpdate(
       { workspaceId: req.workspaceId, phone },
       {
         $set: {
-          riskLevel,
-          totalOrders,
-          successRate,
+          riskLevel: result.riskLevel,
+          totalOrders: result.totalOrders,
+          successRate: result.successRate,
           checkedBy: req.user?._id
         }
       },
@@ -48,13 +64,15 @@ export async function checkPhone(
 
     res.json({
       phone,
-      riskLevel,
-      totalOrders,
-      successRate,
+      riskLevel: result.riskLevel,
+      totalOrders: result.totalOrders,
+      successRate: result.successRate,
+      provider: result.provider,
       lastChecked: log.createdAt
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Fraud check error:", error);
+    res.status(500).json({ message: "Failed to perform fraud check" });
   }
 }
 

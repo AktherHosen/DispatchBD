@@ -133,14 +133,14 @@ export default function SuperAdminPage() {
         ))}
       </div>
 
-      <Tabs defaultValue="workspaces" className="space-y-4">
+      <Tabs defaultValue={0} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+          <TabsTrigger value={0}>Workspaces</TabsTrigger>
+          <TabsTrigger value={1}>Users</TabsTrigger>
+          <TabsTrigger value={2}>Subscriptions</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="workspaces" className="space-y-4">
+        <TabsContent value={0} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>All Workspaces</CardTitle>
@@ -214,7 +214,7 @@ export default function SuperAdminPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="users" className="space-y-4">
+        <TabsContent value={1} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>All Users</CardTitle>
@@ -228,7 +228,7 @@ export default function SuperAdminPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="subscriptions" className="space-y-4">
+        <TabsContent value={2} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Subscriptions</CardTitle>

@@ -27,10 +27,11 @@ const loadInitialState = (): AuthState => {
     const workspaceStr = localStorage.getItem("workspace");
     
     if (token && userStr && workspaceStr) {
+      const workspace = JSON.parse(workspaceStr);
       return {
         accessToken: token,
         user: JSON.parse(userStr),
-        workspace: JSON.parse(workspaceStr),
+        workspace: { id: workspace.id || workspace._id, name: workspace.name, slug: workspace.slug },
         isAuthenticated: true
       };
     }
