@@ -3,10 +3,19 @@ import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import DashboardPage from "@/pages/DashboardPage";
 import AppLayout from "@/components/layout/AppLayout";
+import StoreConnectionsPage from "@/features/store/StoreConnectionsPage";
+import StoreConnectionCreatePage from "@/features/store/StoreConnectionCreatePage";
+import StoreOrdersPage from "@/features/store/StoreOrdersPage";
+import CourierConnectionsPage from "@/features/courier/CourierConnectionsPage";
+import CourierOrdersPage from "@/features/courier/CourierOrdersPage";
+import FraudCheckPage from "@/features/fraud/FraudCheckPage";
+import PlansPage from "@/features/billing/PlansPage";
+import ApiKeysPage from "@/features/api-keys/ApiKeysPage";
+import SettingsPage from "@/features/settings/SettingsPage";
+import SuperAdminPage from "@/pages/admin/SuperAdminPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  // TODO: check auth status
-  const isAuthenticated = true;
+  const isAuthenticated = true; // TODO: check auth status
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -14,8 +23,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function GuestRoute({ children }: { children: React.ReactNode }) {
-  // TODO: check auth status
-  const isAuthenticated = true;
+  const isAuthenticated = true; // TODO: check auth status
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -54,31 +62,61 @@ export default function App() {
           }
         />
 
-        {/* Placeholder routes */}
+        {/* Store routes */}
         <Route
           path="/stores"
           element={
             <ProtectedRoute>
-              <div className="text-2xl font-bold">Stores - Coming Soon</div>
+              <StoreConnectionsPage />
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/stores/new"
+          element={
+            <ProtectedRoute>
+              <StoreConnectionCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stores/orders"
+          element={
+            <ProtectedRoute>
+              <StoreOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Courier routes */}
         <Route
           path="/couriers"
           element={
             <ProtectedRoute>
-              <div className="text-2xl font-bold">Couriers - Coming Soon</div>
+              <CourierConnectionsPage />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/fraud"
+          path="/couriers/orders"
           element={
             <ProtectedRoute>
-              <div className="text-2xl font-bold">Fraud Check - Coming Soon</div>
+              <CourierOrdersPage />
             </ProtectedRoute>
           }
         />
+
+        {/* Fraud check */}
+        <Route
+          path="/fraud"
+          element={
+            <ProtectedRoute>
+              <FraudCheckPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Moderators */}
         <Route
           path="/moderators"
           element={
@@ -87,27 +125,43 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* API Keys */}
         <Route
           path="/api-keys"
           element={
             <ProtectedRoute>
-              <div className="text-2xl font-bold">API Keys - Coming Soon</div>
+              <ApiKeysPage />
             </ProtectedRoute>
           }
         />
+
+        {/* Plans */}
         <Route
           path="/plans"
           element={
             <ProtectedRoute>
-              <div className="text-2xl font-bold">Plans - Coming Soon</div>
+              <PlansPage />
             </ProtectedRoute>
           }
         />
+
+        {/* Settings */}
         <Route
           path="/settings"
           element={
             <ProtectedRoute>
-              <div className="text-2xl font-bold">Settings - Coming Soon</div>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Super Admin */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <SuperAdminPage />
             </ProtectedRoute>
           }
         />

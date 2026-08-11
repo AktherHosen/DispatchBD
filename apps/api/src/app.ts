@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import authRoutes from "./routes/auth.routes";
+import storeConnectionRoutes from "./routes/storeConnection.routes";
+import storeOrderRoutes from "./routes/storeOrder.routes";
+import superAdminRoutes from "./routes/superAdmin.routes";
 
 dotenv.config();
 
@@ -25,6 +28,9 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/store-connections", storeConnectionRoutes);
+app.use("/api/store-orders", storeOrderRoutes);
+app.use("/api/admin", superAdminRoutes);
 
 const port = process.env.PORT || 5000;
 const mongoUri =
