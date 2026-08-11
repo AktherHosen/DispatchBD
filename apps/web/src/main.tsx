@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "sonner";
@@ -16,10 +15,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Provider store={store}>
         <ThemeProvider>
           <TooltipProvider>
-            <SidebarProvider>
-              <App />
-              <Toaster position="top-right" richColors />
-            </SidebarProvider>
+            <App />
+            <Toaster position="top-right" richColors />
           </TooltipProvider>
         </ThemeProvider>
       </Provider>

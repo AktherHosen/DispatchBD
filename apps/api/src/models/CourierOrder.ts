@@ -17,6 +17,7 @@ export interface ICourierOrder extends Document {
   amount: number;
   codAmount: number;
   note?: string;
+  statusHistory: Array<{ status: string; timestamp: Date; note?: string }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,7 +59,14 @@ const courierOrderSchema = new Schema<ICourierOrder>(
     },
     note: {
       type: String
-    }
+    },
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+        note: { type: String }
+      }
+    ]
   },
   {
     timestamps: true

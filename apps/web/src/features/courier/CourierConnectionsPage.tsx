@@ -70,13 +70,22 @@ export default function CourierConnectionsPage() {
           {[1, 2, 3].map((i) => (
             <Card key={i}>
               <CardHeader>
-                <Skeleton className="h-5 w-32" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-5" />
+                    <Skeleton className="h-5 w-32" />
+                  </div>
+                  <Skeleton className="h-8 w-8" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-3 w-40" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-9 w-full" />
+                    <Skeleton className="h-9 w-full" />
+                  </div>
                 </div>
               </CardContent>
             </Card>

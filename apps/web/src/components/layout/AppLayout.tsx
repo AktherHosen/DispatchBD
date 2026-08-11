@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
   SidebarTrigger,
+  SidebarProvider,
   useSidebar
 } from "@/components/ui/sidebar";
 import {
@@ -332,12 +333,12 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
-    <>
+    <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
         <SidebarHeaderComponent />
         <main className="flex-1 p-6">{children}</main>
       </SidebarInset>
-    </>
+    </SidebarProvider>
   );
 }

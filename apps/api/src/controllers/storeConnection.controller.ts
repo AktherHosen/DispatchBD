@@ -18,16 +18,50 @@ const updateSchema = z.object({
   consumerSecret: z.string().min(1).optional()
 });
 
+const listQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+  search: z.string().optional()
+});
+
 export async function listStoreConnections(
   req: WorkspaceAuthRequest,
   res: Response
 ): Promise<void> {
   try {
-    const connections = await StoreConnection.find({
-      workspaceId: req.workspaceId
-    }).sort({ createdAt: -1 });
+    const parsed = listQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error.issues[0].message });
+      return;
+    }
 
-    res.json({ connections });
+    const { page, limit, search } = parsed.data;
+    const filter: Record<string, unknown> = { workspaceId: req.workspaceId };
+
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { storeUrl: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const [connections, total] = await Promise.all([
+      StoreConnection.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      StoreConnection.countDocuments(filter)
+    ]);
+
+    res.json({
+      connections,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }

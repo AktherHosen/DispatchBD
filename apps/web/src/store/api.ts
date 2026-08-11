@@ -101,6 +101,7 @@ interface CourierOrder {
   consignmentId: string;
   status: string;
   amount: number;
+  statusHistory: Array<{ status: string; timestamp: string; note?: string }>;
   createdAt: string;
 }
 
@@ -234,8 +235,11 @@ export const api = createApi({
     }),
 
     // Store Connections
-    getStoreConnections: builder.query<{ connections: StoreConnection[] }, void>({
-      query: () => "/store-connections",
+    getStoreConnections: builder.query<{ connections: StoreConnection[]; pagination: { page: number; limit: number; total: number; totalPages: number } }, { page?: number; limit?: number; search?: string }>({
+      query: (params) => ({
+        url: "/store-connections",
+        params: Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== ""))
+      }),
       providesTags: ["StoreConnection"]
     }),
     getStoreConnection: builder.query<{ connection: StoreConnection }, string>({
@@ -286,10 +290,10 @@ export const api = createApi({
     }),
 
     // Courier Orders
-    getCourierOrders: builder.query<{ orders: CourierOrder[] }, { status?: string; courierConnectionId?: string }>({
+    getCourierOrders: builder.query<{ orders: CourierOrder[]; pagination: { page: number; limit: number; total: number; totalPages: number } }, { page?: number; limit?: number; status?: string; courierConnectionId?: string; search?: string }>({
       query: (params) => ({
         url: "/courier-orders",
-        params: Object.fromEntries(Object.entries(params).filter(([_, v]) => v))
+        params: Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== ""))
       }),
       providesTags: ["CourierOrder"]
     }),

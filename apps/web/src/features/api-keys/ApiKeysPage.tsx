@@ -162,9 +162,15 @@ export default function ApiKeysPage() {
             </CardHeader>
             <CardContent>
               {isLoadingKeys ? (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {[1, 2].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                    <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-8 w-8 rounded-md ml-auto" />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -250,11 +256,13 @@ export default function ApiKeysPage() {
             {isLoadingStats ? (
               [1, 2, 3].map((i) => (
                 <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-4 w-24" />
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-4" />
                   </CardHeader>
                   <CardContent>
-                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-12" />
+                    <Skeleton className="h-3 w-20 mt-1" />
                   </CardContent>
                 </Card>
               ))

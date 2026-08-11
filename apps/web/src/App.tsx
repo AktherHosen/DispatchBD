@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import { Skeleton } from "@/components/ui/skeleton";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
 
@@ -18,19 +17,13 @@ const FraudCheckPage = lazy(() => import("@/features/fraud/FraudCheckPage"));
 const PlansPage = lazy(() => import("@/features/billing/PlansPage"));
 const ApiKeysPage = lazy(() => import("@/features/api-keys/ApiKeysPage"));
 const SettingsPage = lazy(() => import("@/features/settings/SettingsPage"));
+const OrderDetailPage = lazy(() => import("@/features/orders/OrderDetailPage"));
 const SuperAdminPage = lazy(() => import("@/pages/admin/SuperAdminPage"));
 
 function PageLoader() {
   return (
-    <div className="space-y-4 p-6">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-4 w-64" />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-28" />
-        ))}
-      </div>
-      <Skeleton className="h-64" />
+    <div className="flex h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
   );
 }
@@ -105,6 +98,16 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <StoreOrdersPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrderDetailPage />
                 </AppLayout>
               </ProtectedRoute>
             }

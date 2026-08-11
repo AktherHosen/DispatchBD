@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +14,28 @@ import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { useGetStoreOrdersQuery, useSyncStoreOrdersMutation, useSendToCourierMutation, useGetCourierConnectionsQuery } from "@/store/api";
 import { useGetStoreConnectionsQuery } from "@/store/api";
-import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle, Loader2, Truck, ShoppingBag } from "lucide-react";
+import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle, Loader2, Truck, ShoppingBag, Download } from "lucide-react";
 import { toast } from "sonner";
+
+function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
+  if (rows.length === 0) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map(row => headers.map(h => {
+      const val = String(row[h] ?? "");
+      return val.includes(",") || val.includes('"') || val.includes("\n")
+        ? `"${val.replace(/"/g, '""')}"`
+        : val;
+    }).join(","))
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -36,6 +57,7 @@ function getStatusBadge(status: string) {
 }
 
 export default function StoreOrdersPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -47,7 +69,7 @@ export default function StoreOrdersPage() {
     search: search || undefined
   });
 
-  const { data: connectionsData } = useGetStoreConnectionsQuery();
+  const { data: connectionsData } = useGetStoreConnectionsQuery({});
   const [syncOrders, { isLoading: isSyncing }] = useSyncStoreOrdersMutation();
   const [sendToCourier, { isLoading: isSending }] = useSendToCourierMutation();
   const { data: courierData } = useGetCourierConnectionsQuery();
@@ -149,6 +171,23 @@ export default function StoreOrdersPage() {
                   <SelectItem value="returned">Returned</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={() => {
+                const rows = (data?.orders ?? []).map(o => ({
+                  OrderNumber: o.orderNumber,
+                  Customer: o.customerName,
+                  Phone: o.customerPhone,
+                  Email: o.customerEmail,
+                  City: o.shippingCity,
+                  Status: o.status,
+                  Total: o.total,
+                  Currency: o.currency,
+                  CreatedAt: new Date(o.createdAt).toLocaleString()
+                }));
+                exportToCsv(`store-orders-${new Date().toISOString().slice(0,10)}.csv`, rows);
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -156,7 +195,15 @@ export default function StoreOrdersPage() {
           {isLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-8 rounded-md ml-auto" />
+                </div>
               ))}
             </div>
           ) : orders.length === 0 ? (
@@ -194,7 +241,7 @@ export default function StoreOrdersPage() {
                             <MoreHorizontal className="h-4 w-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/orders/${order._id}`)}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>

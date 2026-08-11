@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,12 +7,33 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { useGetCourierOrdersQuery } from "@/store/api";
-import { Search, Eye, MoreHorizontal, MapPin, AlertCircle, Truck } from "lucide-react";
+import { Search, Eye, MoreHorizontal, MapPin, AlertCircle, Truck, Download } from "lucide-react";
+
+function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
+  if (rows.length === 0) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map(row => headers.map(h => {
+      const val = String(row[h] ?? "");
+      return val.includes(",") || val.includes('"') || val.includes("\n")
+        ? `"${val.replace(/"/g, '""')}"`
+        : val;
+    }).join(","))
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -32,20 +54,20 @@ function getStatusBadge(status: string) {
 }
 
 export default function CourierOrdersPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useGetCourierOrdersQuery({
-    status: statusFilter || undefined
+    page,
+    limit: 20,
+    status: statusFilter || undefined,
+    search: search || undefined
   });
 
   const orders = data?.orders ?? [];
-  const filteredOrders = search
-    ? orders.filter(o =>
-        o.consignmentId.toLowerCase().includes(search.toLowerCase()) ||
-        (o.storeOrderId as any)?.customerName?.toLowerCase?.().includes(search.toLowerCase())
-      )
-    : orders;
+  const pagination = data?.pagination;
 
   return (
     <div className="space-y-6">
@@ -72,7 +94,7 @@ export default function CourierOrdersPage() {
             <div>
               <CardTitle>Orders</CardTitle>
               <CardDescription>
-                {orders.length} orders total
+                {pagination?.total ?? orders.length} orders total
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -81,11 +103,11 @@ export default function CourierOrdersPage() {
                 <Input
                   placeholder="Search orders..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   className="w-full sm:w-64 pl-8"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v === "all" ? "" : (v ?? ""))}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : (v ?? "")); setPage(1); }}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -98,6 +120,21 @@ export default function CourierOrdersPage() {
                   <SelectItem value="returned">Returned</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={() => {
+                const rows = orders.map(o => ({
+                  ConsignmentId: o.consignmentId,
+                  Customer: (o.storeOrderId as any)?.customerName ?? "",
+                  Phone: (o.storeOrderId as any)?.customerPhone ?? "",
+                  Courier: o.courierConnectionId?.name ?? "",
+                  Amount: o.amount,
+                  Status: o.status,
+                  CreatedAt: new Date(o.createdAt).toLocaleString()
+                }));
+                exportToCsv(`courier-orders-${new Date().toISOString().slice(0,10)}.csv`, rows);
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -105,16 +142,25 @@ export default function CourierOrdersPage() {
           {isLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-8 rounded-md ml-auto" />
+                </div>
               ))}
             </div>
-          ) : filteredOrders.length === 0 ? (
+          ) : orders.length === 0 ? (
             <EmptyState
               icon={Truck}
               title="No courier orders"
               description="Orders will appear here once you send them to a courier from the store orders page."
             />
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -128,7 +174,7 @@ export default function CourierOrdersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredOrders.map((order) => (
+                {orders.map((order) => (
                   <TableRow key={order._id}>
                     <TableCell className="font-medium">{order.consignmentId}</TableCell>
                     <TableCell>{(order.storeOrderId as any)?.customerName ?? "—"}</TableCell>
@@ -142,7 +188,7 @@ export default function CourierOrdersPage() {
                           <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/orders/${order.storeOrderId?._id ?? order._id}`)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
@@ -161,6 +207,41 @@ export default function CourierOrdersPage() {
                 ))}
               </TableBody>
             </Table>
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex justify-center mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        className={page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                      const start = Math.max(1, Math.min(page - 2, pagination.totalPages - 4));
+                      return start + i;
+                    }).filter(p => p <= pagination.totalPages).map((p) => (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          onClick={() => setPage(p)}
+                          isActive={p === page}
+                          className="cursor-pointer"
+                        >
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                        className={page >= pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+            </>
           )}
         </CardContent>
       </Card>

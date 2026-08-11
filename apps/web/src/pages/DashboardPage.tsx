@@ -89,7 +89,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20 rounded-md" />
               ) : (
                 <div className="text-2xl font-bold">{stat.value}</div>
               )}
@@ -117,7 +117,16 @@ export default function DashboardPage() {
               {isLoading ? (
                 <div className="space-y-4">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                    <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : recentOrders.length === 0 ? (

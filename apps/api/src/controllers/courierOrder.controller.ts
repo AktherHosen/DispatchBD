@@ -16,7 +16,16 @@ const createSchema = z.object({
 });
 
 const updateStatusSchema = z.object({
-  status: z.enum(["pending", "picked", "in_transit", "delivered", "returned", "cancelled"])
+  status: z.enum(["pending", "picked", "in_transit", "delivered", "returned", "cancelled"]),
+  note: z.string().optional()
+});
+
+const listQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+  status: z.enum(["pending", "picked", "in_transit", "delivered", "returned", "cancelled"]).optional(),
+  courierConnectionId: z.string().optional(),
+  search: z.string().optional()
 });
 
 export async function listCourierOrders(
@@ -24,26 +33,44 @@ export async function listCourierOrders(
   res: Response
 ): Promise<void> {
   try {
-    const { status, courierConnectionId } = req.query;
-    
-    const filter: Record<string, unknown> = {
-      workspaceId: req.workspaceId
-    };
-    
-    if (status) {
-      filter.status = status;
-    }
-    
-    if (courierConnectionId) {
-      filter.courierConnectionId = courierConnectionId;
+    const parsed = listQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error.issues[0].message });
+      return;
     }
 
-    const orders = await CourierOrder.find(filter)
-      .populate("courierConnectionId", "name")
-      .populate("storeOrderId")
-      .sort({ createdAt: -1 });
+    const { page, limit, status, courierConnectionId, search } = parsed.data;
+    const filter: Record<string, unknown> = { workspaceId: req.workspaceId };
 
-    res.json({ orders });
+    if (status) filter.status = status;
+    if (courierConnectionId) filter.courierConnectionId = courierConnectionId;
+    if (search) {
+      filter.$or = [
+        { orderNumber: { $regex: search, $options: "i" } },
+        { customerName: { $regex: search, $options: "i" } },
+        { consignmentId: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const [orders, total] = await Promise.all([
+      CourierOrder.find(filter)
+        .populate("courierConnectionId", "name")
+        .populate("storeOrderId")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      CourierOrder.countDocuments(filter)
+    ]);
+
+    res.json({
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -108,7 +135,16 @@ export async function updateCourierOrderStatus(
 
     const order = await CourierOrder.findOneAndUpdate(
       { _id: req.params.id, workspaceId: req.workspaceId },
-      { $set: { status: parsed.data.status } },
+      {
+        $set: { status: parsed.data.status },
+        $push: {
+          statusHistory: {
+            status: parsed.data.status,
+            timestamp: new Date(),
+            note: parsed.data.note
+          }
+        }
+      },
       { new: true }
     );
 
@@ -236,7 +272,8 @@ export async function sendToCourier(
       status: "pending",
       amount: storeOrder.total,
       codAmount: storeOrder.total,
-      note
+      note,
+      statusHistory: [{ status: "pending", timestamp: new Date(), note: "Order created" }]
     });
 
     res.status(201).json({ order: courierOrder, consignmentId: result.consignmentId });

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -25,12 +26,13 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { useGetStoreConnectionsQuery, useDeleteStoreConnectionMutation, useTestStoreConnectionMutation, useSyncStoreOrdersMutation } from "@/store/api";
-import { Plus, Store, ExternalLink, RefreshCw, MoreHorizontal, Pencil, Trash2, Eye, AlertCircle, Loader2 } from "lucide-react";
+import { Plus, Store, ExternalLink, RefreshCw, MoreHorizontal, Pencil, Trash2, Eye, AlertCircle, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 function getStatusBadge(status: string) {
@@ -47,13 +49,16 @@ function getStatusBadge(status: string) {
 }
 
 export default function StoreConnectionsPage() {
-  const { data, isLoading, error } = useGetStoreConnectionsQuery();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const { data, isLoading, error } = useGetStoreConnectionsQuery({ page, limit: 12, search: search || undefined });
   const [deleteConnection] = useDeleteStoreConnectionMutation();
   const [testConnection] = useTestStoreConnectionMutation();
   const [syncOrders, { isLoading: isSyncing }] = useSyncStoreOrdersMutation();
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const connections = data?.connections || [];
+  const pagination = data?.pagination;
 
   const handleSync = async (id: string) => {
     setSyncingId(id);
@@ -113,6 +118,16 @@ export default function StoreConnectionsPage() {
             Add Store
           </Button>
         </Link>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search stores..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="w-full sm:w-64 pl-8"
+        />
       </div>
 
       <Tabs defaultValue="grid" className="space-y-4">
@@ -218,9 +233,16 @@ export default function StoreConnectionsPage() {
           <Card>
             <CardContent className="p-0">
               {isLoading ? (
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-2">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                    <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-8 w-8 rounded-md ml-auto" />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -283,6 +305,38 @@ export default function StoreConnectionsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className={page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+                <PaginationItem key={p}>
+                  <PaginationLink
+                    onClick={() => setPage(p)}
+                    isActive={p === page}
+                    className="cursor-pointer"
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+                  className={page >= pagination.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
