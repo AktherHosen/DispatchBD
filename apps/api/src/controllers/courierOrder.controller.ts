@@ -5,6 +5,7 @@ import { StoreOrder } from "../models/StoreOrder";
 import { CourierConnection } from "../models/CourierConnection";
 import { WorkspaceAuthRequest } from "../middlewares/workspace.middleware";
 import { submitToSteadfast, submitToPathao } from "../services/courierSubmit.service";
+import { onCourierStatusChanged } from "../services/telegramNotification.service";
 
 const createSchema = z.object({
   courierConnectionId: z.string(),
@@ -133,6 +134,19 @@ export async function updateCourierOrderStatus(
       return;
     }
 
+    // Get current order to track old status
+    const currentOrder = await CourierOrder.findOne({
+      _id: req.params.id,
+      workspaceId: req.workspaceId
+    });
+
+    if (!currentOrder) {
+      res.status(404).json({ message: "Courier order not found" });
+      return;
+    }
+
+    const oldStatus = currentOrder.status;
+
     const order = await CourierOrder.findOneAndUpdate(
       { _id: req.params.id, workspaceId: req.workspaceId },
       {
@@ -148,10 +162,8 @@ export async function updateCourierOrderStatus(
       { new: true }
     );
 
-    if (!order) {
-      res.status(404).json({ message: "Courier order not found" });
-      return;
-    }
+    // Fire notification trigger (non-blocking)
+    onCourierStatusChanged(order, oldStatus, parsed.data.status).catch(() => {});
 
     res.json({ order });
   } catch (error) {

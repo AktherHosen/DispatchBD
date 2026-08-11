@@ -8,6 +8,8 @@ export type OrderStatus =
   | "cancelled"
   | "returned";
 
+export type RiskLevel = "low" | "medium" | "high" | "unchecked";
+
 export interface IStoreOrder extends Document {
   workspaceId: mongoose.Types.ObjectId;
   storeConnectionId: mongoose.Types.ObjectId;
@@ -29,6 +31,16 @@ export interface IStoreOrder extends Document {
   currency: string;
   note?: string;
   internalNotes: Array<{ text: string; author: string; createdAt: Date }>;
+  riskLevel: RiskLevel;
+  riskScore: number;
+  riskFactors: {
+    phoneReturnCount: number;
+    zoneRtoRate: number;
+    orderValueDeviation: number;
+  };
+  shippingCost: number;
+  heldAt?: Date;
+  releasedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -108,7 +120,31 @@ const storeOrderSchema = new Schema<IStoreOrder>(
         author: { type: String, required: true },
         createdAt: { type: Date, default: Date.now }
       }
-    ]
+    ],
+    riskLevel: {
+      type: String,
+      enum: ["low", "medium", "high", "unchecked"],
+      default: "unchecked"
+    },
+    riskScore: {
+      type: Number,
+      default: 0
+    },
+    riskFactors: {
+      phoneReturnCount: { type: Number, default: 0 },
+      zoneRtoRate: { type: Number, default: 0 },
+      orderValueDeviation: { type: Number, default: 0 }
+    },
+    shippingCost: {
+      type: Number,
+      default: 0
+    },
+    heldAt: {
+      type: Date
+    },
+    releasedAt: {
+      type: Date
+    }
   },
   {
     timestamps: true
@@ -117,6 +153,8 @@ const storeOrderSchema = new Schema<IStoreOrder>(
 
 storeOrderSchema.index({ workspaceId: 1, storeConnectionId: 1 });
 storeOrderSchema.index({ workspaceId: 1, status: 1 });
+storeOrderSchema.index({ workspaceId: 1, riskLevel: 1 });
+storeOrderSchema.index({ workspaceId: 1, heldAt: 1 }, { sparse: true });
 
 export const StoreOrder = mongoose.model<IStoreOrder>(
   "StoreOrder",

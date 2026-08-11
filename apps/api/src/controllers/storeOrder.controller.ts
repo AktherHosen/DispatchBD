@@ -1,9 +1,11 @@
 import { Response } from "express";
 import { z } from "zod";
+import mongoose from "mongoose";
 import { StoreOrder, OrderStatus } from "../models/StoreOrder";
 import { StoreConnection } from "../models/StoreConnection";
 import { WorkspaceAuthRequest } from "../middlewares/workspace.middleware";
 import { fetchWooCommerceOrders } from "../services/woocommerce.service";
+import { computeOrderRisk, updatePhoneRiskFromOutcome } from "../services/riskScoring.service";
 
 const updateStatusSchema = z.object({
   status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled", "returned"])
@@ -110,6 +112,14 @@ export async function updateOrderStatus(
       return;
     }
 
+    // Feed outcome back to risk model
+    if (parsed.data.status === "delivered" || parsed.data.status === "returned") {
+      await updatePhoneRiskFromOutcome(
+        req.workspaceId as unknown as mongoose.Types.ObjectId,
+        order.customerPhone
+      );
+    }
+
     res.json({ order });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -187,7 +197,20 @@ export async function syncStoreOrders(
             { $set: orderData }
           );
         } else {
-          await StoreOrder.create(orderData);
+          // Compute risk score for new order
+          const risk = await computeOrderRisk(
+            req.workspaceId as unknown as mongoose.Types.ObjectId,
+            orderData.customerPhone,
+            orderData.shippingCity,
+            orderData.total
+          );
+
+          await StoreOrder.create({
+            ...orderData,
+            riskLevel: risk.riskLevel,
+            riskScore: risk.riskScore,
+            riskFactors: risk.factors
+          });
           synced++;
         }
       }

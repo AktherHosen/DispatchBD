@@ -15,6 +15,7 @@ import subscriptionRoutes from "./routes/subscription.routes";
 import superAdminRoutes from "./routes/superAdmin.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import memberRoutes from "./routes/member.routes";
+import notificationRoutes from "./routes/notification.routes";
 import { apiLimiter } from "./middlewares/rateLimit.middleware";
 import { Plan } from "./models/Subscription";
 
@@ -75,6 +76,9 @@ app.use("/api/dashboard", dashboardRoutes);
 
 // Member routes
 app.use("/api/members", memberRoutes);
+
+// Notification routes
+app.use("/api/notifications", notificationRoutes);
 
 const port = env.PORT;
 const mongoUri = env.MONGODB_URI;

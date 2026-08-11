@@ -143,6 +143,45 @@ interface DashboardStats {
     status: string;
     createdAt: string;
   }>;
+  courierPerformance: {
+    total: number;
+    delivered: number;
+    successRate: number;
+    byStatus: Array<{ status: string; count: number; totalAmount: number }>;
+  };
+}
+
+interface RtoStats {
+  summary: {
+    totalOrders: number;
+    totalReturned: number;
+    rtoRate: number;
+    totalRtoCost: number;
+    periodMonths: number;
+  };
+  monthly: Array<{
+    year: number;
+    month: number;
+    label: string;
+    total: number;
+    returned: number;
+    delivered: number;
+    rtoRate: number;
+  }>;
+  byCourier: Array<{
+    courierId: string;
+    courierName: string;
+    totalReturns: number;
+    totalReturnCost: number;
+    totalForwardCost: number;
+    totalCost: number;
+  }>;
+  topReturners: Array<{
+    phone: string;
+    name: string;
+    returnCount: number;
+    totalValue: number;
+  }>;
 }
 
 interface FraudCheckLog {
@@ -179,6 +218,29 @@ interface Plan {
   };
 }
 
+interface NotificationSettings {
+  telegram: {
+    enabled: boolean;
+    hasBotToken: boolean;
+    hasChatId: boolean;
+    chatId?: string;
+    linkedAt?: string;
+    notifyStatuses: string[];
+  };
+}
+
+interface NotificationLog {
+  _id: string;
+  courierOrderId: { consignmentId: string; amount: number; status: string };
+  channel: string;
+  recipientType: string;
+  recipient: string;
+  status: "sent" | "failed";
+  payload: string;
+  error?: string;
+  sentAt: string;
+}
+
 interface Subscription {
   _id: string;
   workspaceId: string;
@@ -211,7 +273,8 @@ export const api = createApi({
     "ApiKey",
     "Plan",
     "Subscription",
-    "Member"
+    "Member",
+    "NotificationSettings"
   ],
   endpoints: (builder) => ({
     // Auth
@@ -359,9 +422,16 @@ export const api = createApi({
       query: () => "/dashboard/stats",
       providesTags: ["StoreOrder", "CourierOrder", "StoreConnection", "CourierConnection"]
     }),
+    getRtoStats: builder.query<RtoStats, { months?: number }>({
+      query: (params) => ({
+        url: "/dashboard/rto",
+        params: Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined))
+      }),
+      providesTags: ["StoreOrder", "CourierOrder"]
+    }),
 
     // Fraud Check
-    checkPhone: builder.mutation<{ phone: string; riskLevel: string; totalOrders: number; successRate: number; provider: string }, { phone: string; courierConnectionId: string }>({
+    checkPhone: builder.mutation<{ phone: string; riskLevel: string; totalOrders: number; successRate: number; provider: string; internalRisk: string; internalScore: number }, { phone: string; courierConnectionId: string }>({
       query: (body) => ({ url: "/fraud/check", method: "POST", body }),
       invalidatesTags: ["FraudCheck"]
     }),
@@ -375,6 +445,35 @@ export const api = createApi({
     getFraudStats: builder.query<{ low: number; medium: number; high: number }, void>({
       query: () => "/fraud/stats",
       providesTags: ["FraudCheck"]
+    }),
+    scoreOrder: builder.mutation<{ orderId: string; riskLevel: string; riskScore: number; factors: { phoneReturnCount: number; zoneRtoRate: number; orderValueDeviation: number }; held: boolean }, { orderId: string; autoHold?: boolean }>({
+      query: ({ orderId, autoHold }) => ({
+        url: `/fraud/score/${orderId}${autoHold ? "?autoHold=true" : ""}`,
+        method: "POST"
+      }),
+      invalidatesTags: ["StoreOrder"]
+    }),
+    bulkScoreOrders: builder.mutation<{ summary: { total: number; low: number; medium: number; high: number; held: number }; results: Array<{ orderId: string; orderNumber: string; riskLevel: string; riskScore: number; held: boolean }> }, { autoHold?: boolean }>({
+      query: (body) => ({ url: "/fraud/bulk-score", method: "POST", body }),
+      invalidatesTags: ["StoreOrder"]
+    }),
+    releaseHeldOrder: builder.mutation<{ message: string; orderId: string }, string>({
+      query: (orderId) => ({ url: `/fraud/release/${orderId}`, method: "POST" }),
+      invalidatesTags: ["StoreOrder"]
+    }),
+    getHeldOrders: builder.query<{ orders: Array<{
+      _id: string;
+      orderNumber: string;
+      customerName: string;
+      customerPhone: string;
+      total: number;
+      riskLevel: string;
+      riskScore: number;
+      heldAt: string;
+      storeConnectionId: { name: string };
+    }> }, void>({
+      query: () => "/fraud/held",
+      providesTags: ["StoreOrder"]
     }),
 
     // API Keys
@@ -454,6 +553,36 @@ export const api = createApi({
     reactivateWorkspace: builder.mutation<{ message: string }, string>({
       query: (id) => ({ url: `/admin/workspaces/${id}/reactivate`, method: "POST" }),
       invalidatesTags: ["Workspace"]
+    }),
+
+    // Notifications
+    getNotificationSettings: builder.query<{ settings: NotificationSettings }, void>({
+      query: () => "/notifications/settings",
+      providesTags: ["NotificationSettings"]
+    }),
+    updateBotToken: builder.mutation<{ message: string }, { botToken: string }>({
+      query: (body) => ({ url: "/notifications/bot-token", method: "PUT", body }),
+      invalidatesTags: ["NotificationSettings"]
+    }),
+    getLinkingCode: builder.mutation<{ code: string; instructions: string }, void>({
+      query: () => ({ url: "/notifications/linking-code", method: "POST" }),
+      invalidatesTags: ["NotificationSettings"]
+    }),
+    toggleTelegram: builder.mutation<{ message: string }, { enabled: boolean }>({
+      query: (body) => ({ url: "/notifications/toggle", method: "POST", body }),
+      invalidatesTags: ["NotificationSettings"]
+    }),
+    updateNotifyStatuses: builder.mutation<{ message: string; notifyStatuses: string[] }, { notifyStatuses: string[] }>({
+      query: (body) => ({ url: "/notifications/statuses", method: "PUT", body }),
+      invalidatesTags: ["NotificationSettings"]
+    }),
+    unlinkTelegram: builder.mutation<{ message: string }, void>({
+      query: () => ({ url: "/notifications/unlink", method: "POST" }),
+      invalidatesTags: ["NotificationSettings"]
+    }),
+    getNotificationLogs: builder.query<{ logs: NotificationLog[] }, void>({
+      query: () => "/notifications/logs",
+      providesTags: ["NotificationSettings"]
     })
   })
 });
@@ -502,11 +631,16 @@ export const {
 
   // Dashboard
   useGetDashboardStatsQuery,
+  useGetRtoStatsQuery,
 
   // Fraud Check
   useCheckPhoneMutation,
   useGetFraudChecksQuery,
   useGetFraudStatsQuery,
+  useScoreOrderMutation,
+  useBulkScoreOrdersMutation,
+  useReleaseHeldOrderMutation,
+  useGetHeldOrdersQuery,
 
   // API Keys
   useGetApiKeysQuery,
@@ -531,5 +665,14 @@ export const {
   useGetSuperAdminStatsQuery,
   useGetAdminWorkspacesQuery,
   useSuspendWorkspaceMutation,
-  useReactivateWorkspaceMutation
+  useReactivateWorkspaceMutation,
+
+  // Notifications
+  useGetNotificationSettingsQuery,
+  useUpdateBotTokenMutation,
+  useGetLinkingCodeMutation,
+  useToggleTelegramMutation,
+  useUpdateNotifyStatusesMutation,
+  useUnlinkTelegramMutation,
+  useGetNotificationLogsQuery
 } = api;

@@ -22,6 +22,7 @@ const ApiKeysPage = lazy(() => import("@/features/api-keys/ApiKeysPage"));
 const SettingsPage = lazy(() => import("@/features/settings/SettingsPage"));
 const OrderDetailPage = lazy(() => import("@/features/orders/OrderDetailPage"));
 const SuperAdminPage = lazy(() => import("@/pages/admin/SuperAdminPage"));
+const NotificationsPage = lazy(() => import("@/features/notifications/NotificationsPage"));
 
 function PageLoader() {
   return (
@@ -238,6 +239,18 @@ export default function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <SettingsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Notifications */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <NotificationsPage />
                 </AppLayout>
               </ProtectedRoute>
             }

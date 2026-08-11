@@ -71,6 +71,7 @@ const navigation = [
     title: "Management",
     items: [
       { title: "Fraud Check", href: "/fraud", icon: Shield },
+      { title: "Notifications", href: "/notifications", icon: Bell },
       { title: "Moderators", href: "/moderators", icon: Users },
       { title: "API Keys", href: "/api-keys", icon: Key }
     ]
