@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -9,6 +10,14 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -17,7 +26,22 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Search, RefreshCw, Eye } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {
+  Search,
+  RefreshCw,
+  Eye,
+  MoreHorizontal,
+  Send,
+  Filter,
+  Download
+} from "lucide-react";
 
 const orders = [
   {
@@ -27,6 +51,7 @@ const orders = [
     store: "Fashion BD",
     amount: "৳1,250",
     status: "delivered",
+    courier: "Steadfast",
     date: "2024-01-15"
   },
   {
@@ -36,6 +61,7 @@ const orders = [
     store: "Tech Store",
     amount: "৳3,500",
     status: "in_transit",
+    courier: "Pathao",
     date: "2024-01-14"
   },
   {
@@ -45,6 +71,7 @@ const orders = [
     store: "Fashion BD",
     amount: "৳890",
     status: "pending",
+    courier: "",
     date: "2024-01-14"
   },
   {
@@ -54,6 +81,7 @@ const orders = [
     store: "Home Needs",
     amount: "৳2,100",
     status: "delivered",
+    courier: "Pathao",
     date: "2024-01-13"
   },
   {
@@ -63,6 +91,7 @@ const orders = [
     store: "Fashion BD",
     amount: "৳1,750",
     status: "in_transit",
+    courier: "Steadfast",
     date: "2024-01-13"
   }
 ];
@@ -86,6 +115,7 @@ function getStatusBadge(status: string) {
 
 export default function StoreOrdersPage() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   return (
     <div className="space-y-6">
@@ -96,15 +126,21 @@ export default function StoreOrdersPage() {
             View and manage orders from your stores
           </p>
         </div>
-        <Button variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Sync Orders
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Sync Orders
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Orders</CardTitle>
               <CardDescription>
@@ -112,13 +148,29 @@ export default function StoreOrdersPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search orders..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64"
-              />
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search orders..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-64 pl-8"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="in_transit">In Transit</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -147,9 +199,28 @@ export default function StoreOrdersPage() {
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell>{order.date}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon">
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Send className="mr-2 h-4 w-4" />
+                          Send to Courier
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Update Status
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

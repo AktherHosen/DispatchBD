@@ -8,20 +8,29 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Truck, ExternalLink } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Plus, Truck, ExternalLink, MoreHorizontal, Pencil, Trash2, Settings } from "lucide-react";
 
 const connections = [
   {
     id: "1",
     name: "Steadfast",
     apiEndpoint: "https://api.steadfast.com.bd",
-    status: "active"
+    status: "active",
+    orderCount: 120
   },
   {
     id: "2",
     name: "Pathao Courier",
     apiEndpoint: "https://merchant-api-live.pathao.com",
-    status: "inactive"
+    status: "inactive",
+    orderCount: 0
   }
 ];
 
@@ -61,7 +70,28 @@ export default function CourierConnectionsPage() {
                   <Truck className="h-5 w-5 text-muted-foreground" />
                   <CardTitle className="text-lg">{conn.name}</CardTitle>
                 </div>
-                {getStatusBadge(conn.status)}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configure
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
             <CardContent>
@@ -70,14 +100,15 @@ export default function CourierConnectionsPage() {
                   <ExternalLink className="h-4 w-4" />
                   <span className="truncate">{conn.apiEndpoint}</span>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Test Connection
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Configure
-                  </Button>
+                <div className="flex items-center justify-between">
+                  {getStatusBadge(conn.status)}
+                  <span className="text-sm text-muted-foreground">
+                    {conn.orderCount} orders
+                  </span>
                 </div>
+                <Button variant="outline" size="sm" className="w-full">
+                  Test Connection
+                </Button>
               </div>
             </CardContent>
           </Card>

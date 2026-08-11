@@ -10,6 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -17,7 +24,14 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Search, RefreshCw, Eye } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Search, RefreshCw, Eye, MoreHorizontal, MapPin, Download } from "lucide-react";
 
 const orders = [
   {
@@ -67,6 +81,7 @@ function getStatusBadge(status: string) {
 
 export default function CourierOrdersPage() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   return (
     <div className="space-y-6">
@@ -77,15 +92,21 @@ export default function CourierOrdersPage() {
             Track orders sent to courier providers
           </p>
         </div>
-        <Button variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Sync Status
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+          <Button>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Sync Status
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Orders</CardTitle>
               <CardDescription>
@@ -93,13 +114,26 @@ export default function CourierOrdersPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search orders..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64"
-              />
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search orders..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-64 pl-8"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in_transit">In Transit</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -128,9 +162,28 @@ export default function CourierOrdersPage() {
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell>{order.date}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon">
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <MapPin className="mr-2 h-4 w-4" />
+                          Track Package
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Refresh Status
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

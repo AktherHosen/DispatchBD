@@ -8,7 +8,32 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Store, ExternalLink, RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import {
+  Plus,
+  Store,
+  ExternalLink,
+  RefreshCw,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Eye
+} from "lucide-react";
 
 const connections = [
   {
@@ -17,7 +42,8 @@ const connections = [
     platform: "woocommerce",
     storeUrl: "https://fashionbd.com",
     status: "active",
-    lastSyncAt: "2024-01-15T10:30:00Z"
+    lastSyncAt: "2024-01-15T10:30:00Z",
+    orderCount: 156
   },
   {
     id: "2",
@@ -25,7 +51,8 @@ const connections = [
     platform: "woocommerce",
     storeUrl: "https://techstore.com",
     status: "inactive",
-    lastSyncAt: null
+    lastSyncAt: null,
+    orderCount: 0
   }
 ];
 
@@ -60,44 +87,139 @@ export default function StoreConnectionsPage() {
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {connections.map((conn) => (
-          <Card key={conn.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Store className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="text-lg">{conn.name}</CardTitle>
-                </div>
-                {getStatusBadge(conn.status)}
-              </div>
-              <CardDescription>{conn.platform}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <ExternalLink className="h-4 w-4" />
-                  <span className="truncate">{conn.storeUrl}</span>
-                </div>
-                {conn.lastSyncAt && (
-                  <p className="text-xs text-muted-foreground">
-                    Last sync: {new Date(conn.lastSyncAt).toLocaleDateString()}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Sync
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    View Orders
-                  </Button>
-                </div>
-              </div>
+      <Tabs defaultValue="grid" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="grid">Grid View</TabsTrigger>
+            <TabsTrigger value="list">List View</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="grid" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {connections.map((conn) => (
+              <Card key={conn.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Store className="h-5 w-5 text-muted-foreground" />
+                      <CardTitle className="text-lg">{conn.name}</CardTitle>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Orders
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Sync Now
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <CardDescription>{conn.platform}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <ExternalLink className="h-4 w-4" />
+                      <span className="truncate">{conn.storeUrl}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      {getStatusBadge(conn.status)}
+                      <span className="text-sm text-muted-foreground">
+                        {conn.orderCount} orders
+                      </span>
+                    </div>
+                    {conn.lastSyncAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Last sync: {new Date(conn.lastSyncAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="list" className="space-y-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Platform</TableHead>
+                    <TableHead>URL</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Orders</TableHead>
+                    <TableHead>Last Sync</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {connections.map((conn) => (
+                    <TableRow key={conn.id}>
+                      <TableCell className="font-medium">{conn.name}</TableCell>
+                      <TableCell>{conn.platform}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {conn.storeUrl}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(conn.status)}</TableCell>
+                      <TableCell>{conn.orderCount}</TableCell>
+                      <TableCell>
+                        {conn.lastSyncAt
+                          ? new Date(conn.lastSyncAt).toLocaleDateString()
+                          : "Never"}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Orders
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
-        ))}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

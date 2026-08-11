@@ -11,6 +11,8 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -27,7 +29,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/50">
+    <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
@@ -69,15 +71,26 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Must be at least 8 characters long
+              </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create account"
+              )}
             </Button>
+            <Separator />
             <p className="text-sm text-muted-foreground text-center">
               Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline">
+              <Link to="/login" className="text-primary hover:underline font-medium">
                 Sign in
               </Link>
             </p>

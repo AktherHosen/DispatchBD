@@ -6,6 +6,8 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingBag, Truck, DollarSign, TrendingUp } from "lucide-react";
 
 const stats = [
@@ -121,36 +123,112 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Recent Orders */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-          <CardDescription>
-            You made 26 sales this month.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-              >
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{order.id}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {order.customer} • {order.store}
-                  </p>
+      {/* Tabs for different views */}
+      <Tabs defaultValue="orders" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="orders">Recent Orders</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="couriers">Courier Performance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="orders" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Orders</CardTitle>
+              <CardDescription>
+                You made 26 sales this month.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{order.id}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {order.customer} • {order.store}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <p className="text-sm font-medium">{order.amount}</p>
+                      {getStatusBadge(order.status)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics Overview</CardTitle>
+              <CardDescription>
+                Your business performance at a glance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Daily Revenue</p>
+                  <div className="h-[200px] bg-muted rounded-lg flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">Chart coming soon</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-sm font-medium">{order.amount}</p>
-                  {getStatusBadge(order.status)}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Orders by Status</p>
+                  <div className="h-[200px] bg-muted rounded-lg flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">Chart coming soon</p>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="couriers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Courier Performance</CardTitle>
+              <CardDescription>
+                Track courier delivery performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <Truck className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Steadfast</p>
+                      <p className="text-xs text-muted-foreground">120 orders</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-500">95% success</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                      <Truck className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Pathao</p>
+                      <p className="text-xs text-muted-foreground">85 orders</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-yellow-500">88% success</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

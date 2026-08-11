@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Search, Shield, AlertTriangle, CheckCircle } from "lucide-react";
+import { Search, Shield, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 
 const fraudLogs = [
   {
@@ -77,6 +77,14 @@ function getRiskBadge(level: string) {
 
 export default function FraudCheckPage() {
   const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleCheck = async () => {
+    setLoading(true);
+    // TODO: API call
+    console.log("Checking phone:", phone);
+    setTimeout(() => setLoading(false), 1000);
+  };
 
   return (
     <div className="space-y-6">
@@ -90,7 +98,10 @@ export default function FraudCheckPage() {
       {/* Check form */}
       <Card>
         <CardHeader>
-          <CardTitle>Check Phone Number</CardTitle>
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            <CardTitle>Check Phone Number</CardTitle>
+          </div>
           <CardDescription>
             Enter a phone number to check its fraud risk level
           </CardDescription>
@@ -107,14 +118,52 @@ export default function FraudCheckPage() {
               />
             </div>
             <div className="flex items-end">
-              <Button>
-                <Shield className="h-4 w-4 mr-2" />
+              <Button onClick={handleCheck} disabled={loading || !phone}>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Shield className="h-4 w-4 mr-2" />
+                )}
                 Check Risk
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Risk</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">1,234</div>
+            <p className="text-xs text-muted-foreground">Phone numbers</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Medium Risk</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">89</div>
+            <p className="text-xs text-muted-foreground">Phone numbers</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">High Risk</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">23</div>
+            <p className="text-xs text-muted-foreground">Phone numbers</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* History */}
       <Card>
@@ -126,9 +175,9 @@ export default function FraudCheckPage() {
                 Previous fraud check results
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search phone..." className="w-48" />
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search phone..." className="w-48 pl-8" />
             </div>
           </div>
         </CardHeader>

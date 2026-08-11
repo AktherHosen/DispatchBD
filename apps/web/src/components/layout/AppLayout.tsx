@@ -1,8 +1,22 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   Store,
@@ -14,8 +28,9 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
-  Bell
+  Bell,
+  ChevronDown,
+  User
 } from "lucide-react";
 
 const sidebarItems = [
@@ -61,92 +76,55 @@ const sidebarItems = [
   }
 ];
 
-interface SidebarProps {
-  open: boolean;
-  onClose: () => void;
+interface SidebarContentProps {
+  onLinkClick?: () => void;
 }
 
-export function Sidebar({ open, onClose }: SidebarProps) {
+function SidebarContent({ onLinkClick }: SidebarContentProps) {
   const location = useLocation();
 
   return (
-    <>
-      {/* Mobile overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/80 lg:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <div className="flex h-full flex-col">
-          {/* Logo */}
-          <div className="flex h-16 items-center justify-between px-6 border-b">
-            <Link to="/dashboard" className="text-xl font-bold">
-              DispatchBD
-            </Link>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={onClose}
+    <div className="flex h-full flex-col">
+      <nav className="flex-1 space-y-1 p-4">
+        {sidebarItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              onClick={onLinkClick}
             >
-              <X className="h-5 w-5" />
-            </Button>
+              <item.icon className="h-5 w-5" />
+              {item.title}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <Separator />
+
+      <div className="p-4">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback>JD</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">John Doe</p>
+            <p className="text-xs text-muted-foreground truncate">
+              john@example.com
+            </p>
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4">
-            {sidebarItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                  onClick={onClose}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.title}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <Separator />
-
-          {/* User section */}
-          <div className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                JD
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  john@example.com
-                </p>
-              </div>
-              <Button variant="ghost" size="icon">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
+          <Button variant="ghost" size="icon">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
-      </aside>
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -169,12 +147,44 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       <div className="flex-1" />
 
       <Button variant="ghost" size="icon">
-        <Bell className="h-5 w-5" />
+        <Bell className="h-4 w-4" />
       </Button>
 
-      <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-        JD
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="flex items-center gap-2 p-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium">John Doe</p>
+              <p className="text-xs text-muted-foreground">john@example.com</p>
+            </div>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <User className="mr-2 h-4 w-4" />
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-destructive">
+            <LogOut className="mr-2 h-4 w-4" />
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 }
@@ -188,7 +198,38 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-muted/50">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-card">
+        <div className="flex h-16 items-center border-b px-6">
+          <Link to="/dashboard" className="text-xl font-bold">
+            DispatchBD
+          </Link>
+        </div>
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden fixed top-4 left-4 z-50"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 p-0">
+          <SheetHeader className="border-b">
+            <SheetTitle className="text-left text-xl font-bold px-6 py-4">
+              DispatchBD
+            </SheetTitle>
+          </SheetHeader>
+          <SidebarContent onLinkClick={() => setSidebarOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Main Content */}
       <div className="lg:pl-64">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
         <main className="p-6">{children}</main>

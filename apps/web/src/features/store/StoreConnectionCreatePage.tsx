@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -11,7 +12,8 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Loader2, Store } from "lucide-react";
 
 export default function StoreConnectionCreatePage() {
   const navigate = useNavigate();
@@ -20,7 +22,8 @@ export default function StoreConnectionCreatePage() {
     name: "",
     storeUrl: "",
     consumerKey: "",
-    consumerSecret: ""
+    consumerSecret: "",
+    description: ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,19 +48,23 @@ export default function StoreConnectionCreatePage() {
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">Add Store</h1>
         <p className="text-muted-foreground">
-          Connect your WooCommerce store
+          Connect your WooCommerce store to sync orders
         </p>
       </div>
 
       <Card>
         <form onSubmit={handleSubmit}>
           <CardHeader>
-            <CardTitle>WooCommerce Connection</CardTitle>
+            <div className="flex items-center gap-2">
+              <Store className="h-5 w-5" />
+              <CardTitle>WooCommerce Connection</CardTitle>
+            </div>
             <CardDescription>
-              Enter your WooCommerce REST API credentials
+              Enter your WooCommerce REST API credentials. You can find these in
+              your WooCommerce settings under Advanced &gt; REST API.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Store Name</Label>
               <Input
@@ -67,7 +74,11 @@ export default function StoreConnectionCreatePage() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                A friendly name for this store connection
+              </p>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="storeUrl">Store URL</Label>
               <Input
@@ -77,7 +88,13 @@ export default function StoreConnectionCreatePage() {
                 onChange={(e) => setForm({ ...form, storeUrl: e.target.value })}
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                The full URL of your WooCommerce store
+              </p>
             </div>
+
+            <Separator />
+
             <div className="space-y-2">
               <Label htmlFor="consumerKey">Consumer Key</Label>
               <Input
@@ -90,6 +107,7 @@ export default function StoreConnectionCreatePage() {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="consumerSecret">Consumer Secret</Label>
               <Input
@@ -103,8 +121,20 @@ export default function StoreConnectionCreatePage() {
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Add any notes about this connection..."
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+              />
+            </div>
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-between">
             <Button
               type="button"
               variant="outline"
@@ -113,7 +143,14 @@ export default function StoreConnectionCreatePage() {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Connecting..." : "Connect Store"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                "Connect Store"
+              )}
             </Button>
           </CardFooter>
         </form>
