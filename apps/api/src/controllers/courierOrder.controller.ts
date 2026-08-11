@@ -1,7 +1,10 @@
 import { Response } from "express";
 import { z } from "zod";
 import { CourierOrder, CourierOrderStatus } from "../models/CourierOrder";
+import { StoreOrder } from "../models/StoreOrder";
+import { CourierConnection } from "../models/CourierConnection";
 import { WorkspaceAuthRequest } from "../middlewares/workspace.middleware";
+import { submitToSteadfast, submitToPathao } from "../services/courierSubmit.service";
 
 const createSchema = z.object({
   courierConnectionId: z.string(),
@@ -138,5 +141,107 @@ export async function deleteCourierOrder(
     res.json({ message: "Courier order deleted" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+}
+
+const sendToCourierSchema = z.object({
+  storeOrderId: z.string(),
+  courierConnectionId: z.string(),
+  note: z.string().optional()
+});
+
+export async function sendToCourier(
+  req: WorkspaceAuthRequest,
+  res: Response
+): Promise<void> {
+  try {
+    const parsed = sendToCourierSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error.issues[0].message });
+      return;
+    }
+
+    const { storeOrderId, courierConnectionId, note } = parsed.data;
+
+    const storeOrder = await StoreOrder.findOne({
+      _id: storeOrderId,
+      workspaceId: req.workspaceId
+    });
+
+    if (!storeOrder) {
+      res.status(404).json({ message: "Store order not found" });
+      return;
+    }
+
+    const existing = await CourierOrder.findOne({
+      storeOrderId,
+      workspaceId: req.workspaceId
+    });
+
+    if (existing) {
+      res.status(409).json({ message: "Order already sent to courier", consignmentId: existing.consignmentId });
+      return;
+    }
+
+    const courier = await CourierConnection.findOne({
+      _id: courierConnectionId,
+      workspaceId: req.workspaceId
+    });
+
+    if (!courier) {
+      res.status(404).json({ message: "Courier connection not found" });
+      return;
+    }
+
+    if (courier.status !== "active") {
+      res.status(400).json({ message: "Courier connection is not active" });
+      return;
+    }
+
+    const orderData = {
+      orderNumber: storeOrder.orderNumber,
+      customerName: storeOrder.customerName,
+      customerPhone: storeOrder.customerPhone,
+      customerAddress: storeOrder.shippingAddress,
+      customerCity: storeOrder.shippingCity,
+      amount: storeOrder.total,
+      note: note || storeOrder.note
+    };
+
+    let result;
+    const courierName = courier.name.toLowerCase();
+
+    if (courierName.includes("steadfast")) {
+      result = await submitToSteadfast(courier.apiKey, courier.apiSecret, orderData);
+    } else if (courierName.includes("pathao")) {
+      result = await submitToPathao(courier.apiKey, courier.apiSecret, orderData);
+    } else {
+      result = {
+        success: true,
+        consignmentId: `EXT-${storeOrder.orderNumber}`,
+        message: "Order queued (generic courier)"
+      };
+    }
+
+    if (!result.success) {
+      res.status(400).json({ message: result.message });
+      return;
+    }
+
+    const courierOrder = await CourierOrder.create({
+      workspaceId: req.workspaceId,
+      courierConnectionId: courier._id,
+      storeOrderId: storeOrder._id,
+      consignmentId: result.consignmentId,
+      status: "pending",
+      amount: storeOrder.total,
+      codAmount: storeOrder.total,
+      note
+    });
+
+    res.status(201).json({ order: courierOrder, consignmentId: result.consignmentId });
+  } catch (error) {
+    console.error("Send to courier error:", error);
+    res.status(500).json({ message: "Failed to send order to courier" });
   }
 }

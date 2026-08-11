@@ -295,6 +295,10 @@ export const api = createApi({
       query: ({ id, status }) => ({ url: `/courier-orders/${id}/status`, method: "PATCH", body: { status } }),
       invalidatesTags: ["CourierOrder"]
     }),
+    sendToCourier: builder.mutation<{ order: CourierOrder; consignmentId: string }, { storeOrderId: string; courierConnectionId: string; note?: string }>({
+      query: (body) => ({ url: "/courier-orders/send", method: "POST", body }),
+      invalidatesTags: ["CourierOrder", "StoreOrder"]
+    }),
 
     // Store Orders
     getStoreOrders: builder.query<{ orders: StoreOrder[]; pagination: { page: number; limit: number; total: number; totalPages: number } }, { page?: number; limit?: number; status?: string; storeConnectionId?: string; search?: string }>({
@@ -407,6 +411,7 @@ export const {
   useGetCourierOrderQuery,
   useCreateCourierOrderMutation,
   useUpdateCourierOrderStatusMutation,
+  useSendToCourierMutation,
 
   // Store Orders
   useGetStoreOrdersQuery,

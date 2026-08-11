@@ -8,10 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
-import { useGetStoreOrdersQuery, useSyncStoreOrdersMutation } from "@/store/api";
+import { useGetStoreOrdersQuery, useSyncStoreOrdersMutation, useSendToCourierMutation, useGetCourierConnectionsQuery } from "@/store/api";
 import { useGetStoreConnectionsQuery } from "@/store/api";
-import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle } from "lucide-react";
+import { Search, RefreshCw, Eye, MoreHorizontal, Send, Filter, AlertCircle, Loader2, Truck } from "lucide-react";
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -46,6 +47,12 @@ export default function StoreOrdersPage() {
 
   const { data: connectionsData } = useGetStoreConnectionsQuery();
   const [syncOrders, { isLoading: isSyncing }] = useSyncStoreOrdersMutation();
+  const [sendToCourier, { isLoading: isSending }] = useSendToCourierMutation();
+  const { data: courierData } = useGetCourierConnectionsQuery();
+
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [selectedCourier, setSelectedCourier] = useState("");
 
   const handleSync = async (storeConnectionId: string) => {
     try {
@@ -53,6 +60,27 @@ export default function StoreOrdersPage() {
     } catch {
       // error handled by RTK Query
     }
+  };
+
+  const handleSendToCourier = async () => {
+    if (!selectedOrder || !selectedCourier) return;
+    try {
+      await sendToCourier({
+        storeOrderId: selectedOrder,
+        courierConnectionId: selectedCourier
+      }).unwrap();
+      setSendDialogOpen(false);
+      setSelectedOrder(null);
+      setSelectedCourier("");
+    } catch {
+      // error handled by RTK Query
+    }
+  };
+
+  const openSendDialog = (orderId: string) => {
+    setSelectedOrder(orderId);
+    setSelectedCourier("");
+    setSendDialogOpen(true);
   };
 
   const orders = data?.orders ?? [];
@@ -162,7 +190,7 @@ export default function StoreOrdersPage() {
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openSendDialog(order._id)}>
                               <Send className="mr-2 h-4 w-4" />
                               Send to Courier
                             </DropdownMenuItem>
@@ -197,6 +225,50 @@ export default function StoreOrdersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send to Courier</DialogTitle>
+            <DialogDescription>
+              Select a courier to send this order for delivery.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Courier</label>
+              <Select value={selectedCourier} onValueChange={(v) => setSelectedCourier(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select courier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(courierData?.connections ?? []).map((c) => (
+                    <SelectItem key={c._id} value={c._id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSendToCourier} disabled={!selectedCourier || isSending}>
+              {isSending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Truck className="mr-2 h-4 w-4" />
+                  Send Order
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
