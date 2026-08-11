@@ -33,8 +33,8 @@ import {
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { useLogoutMutation } from "@/store/api";
-import { logout as logoutAction } from "@/store/authSlice";
+import { useLogoutMutation, useGetUserWorkspacesQuery } from "@/store/api";
+import { logout as logoutAction, setWorkspace } from "@/store/authSlice";
 import {
   LayoutDashboard,
   Store,
@@ -51,7 +51,9 @@ import {
   ChevronRight,
   Home,
   Moon,
-  Sun
+  Sun,
+  Building2,
+  Check
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -125,6 +127,11 @@ function AppSidebar() {
   const { user } = useAppSelector((state) => state.auth);
   const [logoutApi] = useLogoutMutation();
   const { theme, setTheme } = useTheme();
+  const { data: workspacesData } = useGetUserWorkspacesQuery();
+  const workspace = useAppSelector((state) => state.auth.workspace);
+
+  const workspaces = workspacesData?.workspaces ?? [];
+  const currentWorkspace = workspaces.find((w) => w.id === workspace?.id);
 
   const handleLogout = async () => {
     try {
@@ -162,6 +169,61 @@ function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
+      <SidebarSeparator />
+
+      {workspaces.length > 1 && (
+        <>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
+                        <Building2 className="size-4" />
+                        <div className="grid flex-1 text-left text-sm leading-tight">
+                          <span className="truncate font-medium">
+                            {currentWorkspace?.name ?? "Select workspace"}
+                          </span>
+                          <span className="truncate text-xs">
+                            {workspaces.length} workspaces
+                          </span>
+                        </div>
+                        <ChevronDown className="ml-auto size-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="w-[--radix-dropdown-menu-trigger-width]"
+                        side="bottom"
+                        align="start"
+                      >
+                        {workspaces.map((ws) => (
+                          <DropdownMenuItem
+                            key={ws.id}
+                            onClick={() => {
+                              dispatch(setWorkspace({ id: ws.id, name: ws.name, slug: ws.slug }));
+                            }}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div>
+                                <p className="text-sm font-medium">{ws.name}</p>
+                                <p className="text-xs text-muted-foreground">{ws.role}</p>
+                              </div>
+                              {ws.id === workspace?.id && <Check className="h-4 w-4" />}
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarSeparator />
+        </>
+      )}
 
       <SidebarContent>
         {navigation.map((group) => (

@@ -200,3 +200,29 @@ export async function me(req: AuthRequest, res: Response): Promise<void> {
     res.status(500).json({ message: "Server error" });
   }
 }
+
+export async function listWorkspaces(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const members = await WorkspaceMember.find({
+      userId: req.user._id
+    }).populate("workspaceId");
+
+    const workspaces = members
+      .filter((m) => m.workspaceId)
+      .map((m) => ({
+        id: (m.workspaceId as any)._id.toString(),
+        name: (m.workspaceId as any).name,
+        slug: (m.workspaceId as any).slug,
+        role: m.role
+      }));
+
+    res.json({ workspaces });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+}

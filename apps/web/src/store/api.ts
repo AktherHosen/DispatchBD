@@ -218,6 +218,10 @@ export const api = createApi({
       query: () => "/auth/me",
       providesTags: ["User"]
     }),
+    getUserWorkspaces: builder.query<{ workspaces: Array<{ id: string; name: string; slug: string; role: string }> }, void>({
+      query: () => "/auth/workspaces",
+      providesTags: ["User"]
+    }),
 
     // Store Connections
     getStoreConnections: builder.query<{ connections: StoreConnection[] }, void>({
@@ -380,6 +384,7 @@ export const {
   useLoginMutation,
   useLogoutMutation,
   useGetMeQuery,
+  useGetUserWorkspacesQuery,
 
   // Store Connections
   useGetStoreConnectionsQuery,

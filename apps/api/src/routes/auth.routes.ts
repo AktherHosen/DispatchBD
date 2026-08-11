@@ -4,7 +4,8 @@ import {
   login,
   logout,
   refreshToken,
-  me
+  me,
+  listWorkspaces
 } from "../controllers/auth.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { authLimiter } from "../middlewares/rateLimit.middleware";
@@ -16,5 +17,6 @@ router.post("/login", authLimiter, login);
 router.post("/logout", logout);
 router.post("/refresh", refreshToken);
 router.get("/me", authMiddleware, me);
+router.get("/workspaces", authMiddleware, listWorkspaces);
 
 export default router;

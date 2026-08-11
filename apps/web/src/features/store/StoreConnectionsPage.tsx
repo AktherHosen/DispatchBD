@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,8 +28,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
-import { useGetStoreConnectionsQuery, useDeleteStoreConnectionMutation, useTestStoreConnectionMutation } from "@/store/api";
-import { Plus, Store, ExternalLink, RefreshCw, MoreHorizontal, Pencil, Trash2, Eye, AlertCircle } from "lucide-react";
+import { useGetStoreConnectionsQuery, useDeleteStoreConnectionMutation, useTestStoreConnectionMutation, useSyncStoreOrdersMutation } from "@/store/api";
+import { Plus, Store, ExternalLink, RefreshCw, MoreHorizontal, Pencil, Trash2, Eye, AlertCircle, Loader2 } from "lucide-react";
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -47,8 +48,21 @@ export default function StoreConnectionsPage() {
   const { data, isLoading, error } = useGetStoreConnectionsQuery();
   const [deleteConnection] = useDeleteStoreConnectionMutation();
   const [testConnection] = useTestStoreConnectionMutation();
+  const [syncOrders, { isLoading: isSyncing }] = useSyncStoreOrdersMutation();
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const connections = data?.connections || [];
+
+  const handleSync = async (id: string) => {
+    setSyncingId(id);
+    try {
+      await syncOrders(id).unwrap();
+    } catch {
+      // error handled by RTK Query
+    } finally {
+      setSyncingId(null);
+    }
+  };
 
   if (error) {
     return (
@@ -135,9 +149,13 @@ export default function StoreConnectionsPage() {
                             <Eye className="mr-2 h-4 w-4" />
                             View Orders
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => testConnection(conn._id)}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Sync Now
+                          <DropdownMenuItem onClick={() => handleSync(conn._id)} disabled={syncingId === conn._id}>
+                            {syncingId === conn._id ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="mr-2 h-4 w-4" />
+                            )}
+                            {syncingId === conn._id ? "Syncing..." : "Sync Orders"}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 

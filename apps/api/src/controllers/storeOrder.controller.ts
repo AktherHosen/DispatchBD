@@ -1,7 +1,9 @@
 import { Response } from "express";
 import { z } from "zod";
 import { StoreOrder, OrderStatus } from "../models/StoreOrder";
+import { StoreConnection } from "../models/StoreConnection";
 import { WorkspaceAuthRequest } from "../middlewares/workspace.middleware";
+import { fetchWooCommerceOrders } from "../services/woocommerce.service";
 
 const updateStatusSchema = z.object({
   status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled", "returned"])
@@ -117,10 +119,98 @@ export async function syncStoreOrders(
   try {
     const { storeConnectionId } = req.params;
 
-    // Placeholder: In real implementation, fetch from WooCommerce API
-    // and upsert orders into StoreOrder collection
-    res.json({ message: "Sync started", synced: 0 });
+    const connection = await StoreConnection.findOne({
+      _id: storeConnectionId,
+      workspaceId: req.workspaceId
+    });
+
+    if (!connection) {
+      res.status(404).json({ message: "Store connection not found" });
+      return;
+    }
+
+    if (connection.status !== "active") {
+      res.status(400).json({ message: "Store connection is not active. Test the connection first." });
+      return;
+    }
+
+    let synced = 0;
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { orders, totalPages } = await fetchWooCommerceOrders(
+        connection.storeUrl,
+        connection.consumerKey,
+        connection.consumerSecret,
+        page,
+        50
+      );
+
+      for (const wcOrder of orders) {
+        const existing = await StoreOrder.findOne({
+          workspaceId: req.workspaceId,
+          wooCommerceId: wcOrder.id
+        });
+
+        const orderData = {
+          workspaceId: req.workspaceId,
+          storeConnectionId: connection._id,
+          wooCommerceId: wcOrder.id,
+          orderNumber: wcOrder.number || `WC-${wcOrder.id}`,
+          status: mapWooCommerceStatus(wcOrder.status),
+          customerName: `${wcOrder.billing.first_name} ${wcOrder.billing.last_name}`.trim(),
+          customerPhone: wcOrder.billing.phone || "",
+          customerEmail: wcOrder.billing.email || "",
+          shippingAddress: wcOrder.shipping
+            ? `${wcOrder.shipping.address_1}, ${wcOrder.shipping.city}`
+            : "",
+          shippingCity: wcOrder.shipping?.city || "",
+          items: (wcOrder.line_items || []).map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: parseFloat(String(item.price))
+          })),
+          subtotal: parseFloat(wcOrder.total) || 0,
+          total: parseFloat(wcOrder.total) || 0,
+          currency: wcOrder.currency || "BDT",
+          note: wcOrder.customer_note || ""
+        };
+
+        if (existing) {
+          await StoreOrder.findOneAndUpdate(
+            { _id: existing._id },
+            { $set: orderData }
+          );
+        } else {
+          await StoreOrder.create(orderData);
+          synced++;
+        }
+      }
+
+      page++;
+      hasMore = page <= totalPages && page <= 10;
+    }
+
+    connection.lastSyncAt = new Date();
+    await connection.save();
+
+    res.json({ message: "Sync completed", synced });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Sync error:", error);
+    res.status(500).json({ message: "Failed to sync orders" });
   }
+}
+
+function mapWooCommerceStatus(status: string): OrderStatus {
+  const statusMap: Record<string, OrderStatus> = {
+    pending: "pending",
+    processing: "processing",
+    "on-hold": "processing",
+    completed: "delivered",
+    cancelled: "cancelled",
+    refunded: "returned",
+    failed: "cancelled"
+  };
+  return statusMap[status] || "pending";
 }
