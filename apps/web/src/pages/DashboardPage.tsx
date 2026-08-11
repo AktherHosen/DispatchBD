@@ -8,93 +8,59 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
-import { ShoppingBag, Truck, DollarSign, TrendingUp } from "lucide-react";
-
-const stats = [
-  {
-    title: "Total Orders",
-    value: "1,234",
-    description: "+12% from last month",
-    icon: ShoppingBag
-  },
-  {
-    title: "Active Couriers",
-    value: "8",
-    description: "2 pending connection",
-    icon: Truck
-  },
-  {
-    title: "Total Sales",
-    value: "৳45,231",
-    description: "+8% from last month",
-    icon: DollarSign
-  },
-  {
-    title: "Success Rate",
-    value: "94.5%",
-    description: "+2.1% from last month",
-    icon: TrendingUp
-  }
-];
-
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "Rahim Uddin",
-    store: "Fashion BD",
-    amount: "৳1,250",
-    status: "delivered",
-    courier: "Steadfast"
-  },
-  {
-    id: "ORD-002",
-    customer: "Karim Ahmed",
-    store: "Tech Store",
-    amount: "৳3,500",
-    status: "in_transit",
-    courier: "Pathao"
-  },
-  {
-    id: "ORD-003",
-    customer: "Fatima Begum",
-    store: "Fashion BD",
-    amount: "৳890",
-    status: "pending",
-    courier: "Steadfast"
-  },
-  {
-    id: "ORD-004",
-    customer: "Hasan Ali",
-    store: "Home Needs",
-    amount: "৳2,100",
-    status: "delivered",
-    courier: "Pathao"
-  },
-  {
-    id: "ORD-005",
-    customer: "Nusrat Jahan",
-    store: "Fashion BD",
-    amount: "৳1,750",
-    status: "in_transit",
-    courier: "Steadfast"
-  }
-];
+import { useGetDashboardStatsQuery } from "@/store/api";
+import { ShoppingBag, Truck, Store, DollarSign, TrendingUp, AlertCircle } from "lucide-react";
 
 function getStatusBadge(status: string) {
   switch (status) {
     case "delivered":
       return <Badge className="bg-green-500 hover:bg-green-600">Delivered</Badge>;
+    case "shipped":
     case "in_transit":
       return <Badge className="bg-blue-500 hover:bg-blue-600">In Transit</Badge>;
     case "pending":
       return <Badge className="bg-yellow-500 hover:bg-yellow-600">Pending</Badge>;
+    case "processing":
+      return <Badge className="bg-purple-500 hover:bg-purple-600">Processing</Badge>;
+    case "cancelled":
+    case "returned":
+      return <Badge variant="destructive">{status === "cancelled" ? "Cancelled" : "Returned"}</Badge>;
     default:
       return <Badge>{status}</Badge>;
   }
 }
 
 export default function DashboardPage() {
+  const { data, isLoading, error } = useGetDashboardStatsQuery();
+
+  const stats = data?.stats;
+  const recentOrders = data?.recentOrders ?? [];
+
+  const statCards = [
+    {
+      title: "Total Orders",
+      value: stats?.totalOrders ?? 0,
+      icon: ShoppingBag
+    },
+    {
+      title: "Active Couriers",
+      value: stats?.activeCouriers ?? 0,
+      icon: Truck
+    },
+    {
+      title: "Active Stores",
+      value: stats?.activeStores ?? 0,
+      icon: Store
+    },
+    {
+      title: "Success Rate",
+      value: `${stats?.successRate ?? 0}%`,
+      icon: TrendingUp
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <AppBreadcrumb items={[{ label: "Dashboard" }]} />
@@ -105,9 +71,15 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Grid */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Failed to load dashboard data. Please try again.</AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -116,56 +88,66 @@ export default function DashboardPage() {
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.description}
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <div className="text-2xl font-bold">{stat.value}</div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Tabs for different views */}
-      <Tabs defaultValue="orders" className="space-y-4">
+      <Tabs defaultValue={0} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="orders">Recent Orders</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="couriers">Courier Performance</TabsTrigger>
+          <TabsTrigger value={0}>Recent Orders</TabsTrigger>
+          <TabsTrigger value={1}>Analytics</TabsTrigger>
+          <TabsTrigger value={2}>Courier Performance</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="orders" className="space-y-4">
+        <TabsContent value={0} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Recent Orders</CardTitle>
               <CardDescription>
-                You made 26 sales this month.
+                Your latest store orders
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{order.id}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {order.customer} • {order.store}
-                      </p>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : recentOrders.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No orders yet</p>
+              ) : (
+                <div className="space-y-4">
+                  {recentOrders.map((order) => (
+                    <div
+                      key={order._id}
+                      className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{order.orderNumber}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.customerName}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <p className="text-sm font-medium">৳{order.total.toLocaleString()}</p>
+                        {getStatusBadge(order.status)}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <p className="text-sm font-medium">{order.amount}</p>
-                      {getStatusBadge(order.status)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
+        <TabsContent value={1} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Analytics Overview</CardTitle>
@@ -176,15 +158,15 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Daily Revenue</p>
-                  <div className="h-[200px] bg-muted rounded-lg flex items-center justify-center">
-                    <Skeleton className="h-[200px] w-full" />
+                  <p className="text-sm font-medium">Total Revenue</p>
+                  <div className="text-3xl font-bold">
+                    ৳{(stats?.totalRevenue ?? 0).toLocaleString()}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Orders by Status</p>
-                  <div className="h-[200px] bg-muted rounded-lg flex items-center justify-center">
-                    <Skeleton className="h-[200px] w-full" />
+                  <p className="text-sm font-medium">Success Rate</p>
+                  <div className="text-3xl font-bold">
+                    {stats?.successRate ?? 0}%
                   </div>
                 </div>
               </div>
@@ -192,7 +174,7 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="couriers" className="space-y-4">
+        <TabsContent value={2} className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Courier Performance</CardTitle>
@@ -201,32 +183,9 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <Truck className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Steadfast</p>
-                      <p className="text-xs text-muted-foreground">120 orders</p>
-                    </div>
-                  </div>
-                  <Badge className="bg-green-500">95% success</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <Truck className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Pathao</p>
-                      <p className="text-xs text-muted-foreground">85 orders</p>
-                    </div>
-                  </div>
-                  <Badge className="bg-yellow-500">88% success</Badge>
-                </div>
-              </div>
+              <p className="text-muted-foreground text-center py-8">
+                Courier analytics coming soon
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

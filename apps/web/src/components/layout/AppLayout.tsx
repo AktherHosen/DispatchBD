@@ -49,8 +49,11 @@ import {
   ChevronDown,
   User,
   ChevronRight,
-  Home
+  Home,
+  Moon,
+  Sun
 } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 const navigation = [
   {
@@ -121,6 +124,7 @@ function AppSidebar() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const [logoutApi] = useLogoutMutation();
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     try {
@@ -222,6 +226,10 @@ function AppSidebar() {
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+                  {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                  {theme === "dark" ? "Light mode" : "Dark mode"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" onClick={handleLogout}>

@@ -104,6 +104,44 @@ interface CourierOrder {
   createdAt: string;
 }
 
+interface StoreOrder {
+  _id: string;
+  workspaceId: string;
+  storeConnectionId: string;
+  wooCommerceId: number;
+  orderNumber: string;
+  status: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  shippingAddress: string;
+  shippingCity: string;
+  items: Array<{ name: string; quantity: number; price: number }>;
+  subtotal: number;
+  total: number;
+  currency: string;
+  note?: string;
+  createdAt: string;
+}
+
+interface DashboardStats {
+  stats: {
+    totalOrders: number;
+    activeCouriers: number;
+    activeStores: number;
+    totalRevenue: number;
+    successRate: number;
+  };
+  recentOrders: Array<{
+    _id: string;
+    orderNumber: string;
+    customerName: string;
+    total: number;
+    status: string;
+    createdAt: string;
+  }>;
+}
+
 interface FraudCheckLog {
   _id: string;
   workspaceId: string;
@@ -154,6 +192,7 @@ export const api = createApi({
     "User",
     "Workspace",
     "StoreConnection",
+    "StoreOrder",
     "CourierConnection",
     "CourierOrder",
     "FraudCheck",
@@ -253,6 +292,29 @@ export const api = createApi({
       invalidatesTags: ["CourierOrder"]
     }),
 
+    // Store Orders
+    getStoreOrders: builder.query<{ orders: StoreOrder[]; pagination: { page: number; limit: number; total: number; totalPages: number } }, { page?: number; limit?: number; status?: string; storeConnectionId?: string; search?: string }>({
+      query: (params) => ({
+        url: "/store-orders",
+        params: Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== ""))
+      }),
+      providesTags: ["StoreOrder"]
+    }),
+    updateStoreOrderStatus: builder.mutation<{ order: StoreOrder }, { id: string; status: string }>({
+      query: ({ id, status }) => ({ url: `/store-orders/${id}/status`, method: "PATCH", body: { status } }),
+      invalidatesTags: ["StoreOrder"]
+    }),
+    syncStoreOrders: builder.mutation<{ message: string; synced: number }, string>({
+      query: (storeConnectionId) => ({ url: `/store-orders/sync/${storeConnectionId}`, method: "POST" }),
+      invalidatesTags: ["StoreOrder", "StoreConnection"]
+    }),
+
+    // Dashboard
+    getDashboardStats: builder.query<DashboardStats, void>({
+      query: () => "/dashboard/stats",
+      providesTags: ["StoreOrder", "CourierOrder", "StoreConnection", "CourierConnection"]
+    }),
+
     // Fraud Check
     checkPhone: builder.mutation<{ phone: string; riskLevel: string; totalOrders: number; successRate: number; provider: string }, { phone: string; courierConnectionId: string }>({
       query: (body) => ({ url: "/fraud/check", method: "POST", body }),
@@ -340,6 +402,14 @@ export const {
   useGetCourierOrderQuery,
   useCreateCourierOrderMutation,
   useUpdateCourierOrderStatusMutation,
+
+  // Store Orders
+  useGetStoreOrdersQuery,
+  useUpdateStoreOrderStatusMutation,
+  useSyncStoreOrdersMutation,
+
+  // Dashboard
+  useGetDashboardStatsQuery,
 
   // Fraud Check
   useCheckPhoneMutation,
