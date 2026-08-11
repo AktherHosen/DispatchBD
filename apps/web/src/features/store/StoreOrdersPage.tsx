@@ -34,6 +34,9 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
+  AppBreadcrumb
+} from "@/components/layout/AppLayout";
+import {
   Search,
   RefreshCw,
   Eye,
@@ -119,6 +122,7 @@ export default function StoreOrdersPage() {
 
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Stores", href: "/stores" }, { label: "Orders" }]} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Store Orders</h1>
@@ -157,7 +161,7 @@ export default function StoreOrdersPage() {
                   className="w-full sm:w-64 pl-8"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
                 <SelectTrigger className="w-[140px]">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Status" />
@@ -200,10 +204,8 @@ export default function StoreOrdersPage() {
                   <TableCell>{order.date}</TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+                        <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>

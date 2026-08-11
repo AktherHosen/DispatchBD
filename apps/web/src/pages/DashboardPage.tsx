@@ -8,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { ShoppingBag, Truck, DollarSign, TrendingUp } from "lucide-react";
 
 const stats = [
@@ -96,6 +97,7 @@ function getStatusBadge(status: string) {
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Dashboard" }]} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
@@ -176,13 +178,13 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Daily Revenue</p>
                   <div className="h-[200px] bg-muted rounded-lg flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">Chart coming soon</p>
+                    <Skeleton className="h-[200px] w-full" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Orders by Status</p>
                   <div className="h-[200px] bg-muted rounded-lg flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">Chart coming soon</p>
+                    <Skeleton className="h-[200px] w-full" />
                   </div>
                 </div>
               </div>

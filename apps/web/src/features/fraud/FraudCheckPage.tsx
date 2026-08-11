@@ -18,7 +18,9 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import { Search, Shield, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
+import { Search, Shield, AlertTriangle, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 
 const fraudLogs = [
   {
@@ -88,6 +90,7 @@ export default function FraudCheckPage() {
 
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Fraud Check" }]} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Fraud Check</h1>
         <p className="text-muted-foreground">

@@ -9,7 +9,28 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, CreditCard, Download } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
+import { Check, CreditCard, Download, Copy, Trash2, Eye, EyeOff, Key, Activity, AlertCircle, Plus } from "lucide-react";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
 
 const plans = [
   {
@@ -67,9 +88,37 @@ const invoices = [
   { id: "INV-003", date: "2023-11-01", amount: "৳0", status: "paid" }
 ];
 
+const apiKeys = [
+  {
+    id: "1",
+    name: "Production API Key",
+    key: "pk_live_xxxxxxxxxxxx",
+    lastUsed: "2024-01-15",
+    createdAt: "2024-01-01",
+    requests: 1200
+  },
+  {
+    id: "2",
+    name: "Test API Key",
+    key: "pk_test_xxxxxxxxxxxx",
+    lastUsed: "2024-01-10",
+    createdAt: "2024-01-05",
+    requests: 34
+  }
+];
+
 export default function PlansPage() {
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newKeyName, setNewKeyName] = useState("");
+
+  const toggleKey = (id: string) => {
+    setShowKeys((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Plans" }]} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Plans & Billing</h1>
         <p className="text-muted-foreground">
@@ -81,6 +130,7 @@ export default function PlansPage() {
         <TabsList>
           <TabsTrigger value="plans">Plans</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
+          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
         </TabsList>
 
         <TabsContent value="plans" className="space-y-6">
@@ -162,6 +212,137 @@ export default function PlansPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="api-keys" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>API Keys</CardTitle>
+                  <CardDescription>
+                    Manage your API keys for public API access
+                  </CardDescription>
+                </div>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger render={<Button />}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Generate Key
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Generate New API Key</DialogTitle>
+                      <DialogDescription>
+                        Create a new API key for external integrations.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="keyName">Key Name</Label>
+                        <Input
+                          id="keyName"
+                          placeholder="e.g., Production Key"
+                          value={newKeyName}
+                          onChange={(e) => setNewKeyName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={() => setDialogOpen(false)}>Generate</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Key</TableHead>
+                    <TableHead>Requests</TableHead>
+                    <TableHead>Last Used</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {apiKeys.map((apiKey) => (
+                    <TableRow key={apiKey.id}>
+                      <TableCell className="font-medium">{apiKey.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <code className="text-sm bg-muted px-2 py-1 rounded">
+                            {showKeys[apiKey.id]
+                              ? apiKey.key
+                              : apiKey.key.slice(0, 8) + "••••••••"}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => toggleKey(apiKey.id)}
+                          >
+                            {showKeys[apiKey.id] ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button variant="ghost" size="icon">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell>{apiKey.requests.toLocaleString()}</TableCell>
+                      <TableCell>{apiKey.lastUsed}</TableCell>
+                      <TableCell>{apiKey.createdAt}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">1,234</div>
+                <p className="text-xs text-muted-foreground">This month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Successful</CardTitle>
+                <Activity className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">1,200</div>
+                <p className="text-xs text-muted-foreground">97.2% success rate</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Failed</CardTitle>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">34</div>
+                <p className="text-xs text-muted-foreground">2.8% failure rate</p>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

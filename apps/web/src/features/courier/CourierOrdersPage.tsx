@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { Search, RefreshCw, Eye, MoreHorizontal, MapPin, Download } from "lucide-react";
 
 const orders = [
@@ -85,6 +86,7 @@ export default function CourierOrdersPage() {
 
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Couriers", href: "/couriers" }, { label: "Orders" }]} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Courier Orders</h1>
@@ -123,7 +125,7 @@ export default function CourierOrdersPage() {
                   className="w-full sm:w-64 pl-8"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -163,10 +165,8 @@ export default function CourierOrdersPage() {
                   <TableCell>{order.date}</TableCell>
                   <TableCell>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+                        <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>

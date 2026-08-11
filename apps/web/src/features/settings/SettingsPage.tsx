@@ -11,11 +11,14 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { User, Building2, Lock, AlertTriangle } from "lucide-react";
 
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Settings" }]} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">
@@ -120,20 +123,15 @@ export default function SettingsPage() {
 
           <Separator />
 
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                Danger Zone
-              </CardTitle>
-              <CardDescription>
-                Irreversible actions for your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="destructive">Delete Workspace</Button>
-            </CardContent>
-          </Card>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Danger Zone</AlertTitle>
+            <AlertDescription>
+              This action is irreversible. Once you delete your workspace, all data will be permanently removed.
+            </AlertDescription>
+          </Alert>
+
+          <Button variant="destructive">Delete Workspace</Button>
         </TabsContent>
       </Tabs>
     </div>

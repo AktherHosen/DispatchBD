@@ -28,6 +28,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import {
   Plus,
   Copy,
@@ -69,6 +70,7 @@ export default function ApiKeysPage() {
 
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "API Keys" }]} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
@@ -77,11 +79,9 @@ export default function ApiKeysPage() {
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Generate Key
-            </Button>
+          <DialogTrigger render={<Button />}>
+            <Plus className="h-4 w-4 mr-2" />
+            Generate Key
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

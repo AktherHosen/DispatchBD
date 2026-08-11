@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { Plus, Truck, ExternalLink, MoreHorizontal, Pencil, Trash2, Settings } from "lucide-react";
 
 const connections = [
@@ -48,6 +49,7 @@ function getStatusBadge(status: string) {
 export default function CourierConnectionsPage() {
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Couriers", href: "/couriers" }]} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Courier Connections</h1>
@@ -71,10 +73,8 @@ export default function CourierConnectionsPage() {
                   <CardTitle className="text-lg">{conn.name}</CardTitle>
                 </div>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+                    <MoreHorizontal className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>

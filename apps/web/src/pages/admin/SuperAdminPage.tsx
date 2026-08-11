@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { Building2, Users, User, Ban, CheckCircle, MoreHorizontal, Eye, Mail } from "lucide-react";
 
 const stats = [
@@ -106,6 +107,7 @@ function getStatusBadge(status: string) {
 export default function SuperAdminPage() {
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Super Admin" }]} />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Super Admin</h1>
         <p className="text-muted-foreground">
@@ -177,10 +179,8 @@ export default function SuperAdminPage() {
                       <TableCell>{getStatusBadge(ws.status)}</TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+                            <MoreHorizontal className="h-4 w-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>

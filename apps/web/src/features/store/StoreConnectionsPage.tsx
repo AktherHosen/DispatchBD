@@ -25,6 +25,9 @@ import {
   TableRow
 } from "@/components/ui/table";
 import {
+  AppBreadcrumb
+} from "@/components/layout/AppLayout";
+import {
   Plus,
   Store,
   ExternalLink,
@@ -72,6 +75,7 @@ function getStatusBadge(status: string) {
 export default function StoreConnectionsPage() {
   return (
     <div className="space-y-6">
+      <AppBreadcrumb items={[{ label: "Stores", href: "/stores" }]} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Store Connections</h1>
@@ -106,10 +110,8 @@ export default function StoreConnectionsPage() {
                       <CardTitle className="text-lg">{conn.name}</CardTitle>
                     </div>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+                        <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
@@ -190,10 +192,8 @@ export default function StoreConnectionsPage() {
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+                            <MoreHorizontal className="h-4 w-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>

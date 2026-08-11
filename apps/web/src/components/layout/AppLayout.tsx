@@ -1,15 +1,6 @@
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger
-} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +8,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar
+} from "@/components/ui/sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
 import {
   LayoutDashboard,
   Store,
@@ -27,164 +44,185 @@ import {
   CreditCard,
   Settings,
   LogOut,
-  Menu,
   Bell,
   ChevronDown,
-  User
+  User,
+  ChevronRight,
+  Home,
+  PanelLeft
 } from "lucide-react";
 
-const sidebarItems = [
+const navigation = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard
+    title: "Platform",
+    items: [
+      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { title: "Stores", href: "/stores", icon: Store },
+      { title: "Couriers", href: "/couriers", icon: Truck }
+    ]
   },
   {
-    title: "Stores",
-    href: "/stores",
-    icon: Store
+    title: "Management",
+    items: [
+      { title: "Fraud Check", href: "/fraud", icon: Shield },
+      { title: "Moderators", href: "/moderators", icon: Users },
+      { title: "API Keys", href: "/api-keys", icon: Key }
+    ]
   },
   {
-    title: "Couriers",
-    href: "/couriers",
-    icon: Truck
-  },
-  {
-    title: "Fraud Check",
-    href: "/fraud",
-    icon: Shield
-  },
-  {
-    title: "Moderators",
-    href: "/moderators",
-    icon: Users
-  },
-  {
-    title: "API Keys",
-    href: "/api-keys",
-    icon: Key
-  },
-  {
-    title: "Plans",
-    href: "/plans",
-    icon: CreditCard
-  },
-  {
-    title: "Settings",
-    href: "/settings",
-    icon: Settings
+    title: "Account",
+    items: [
+      { title: "Plans", href: "/plans", icon: CreditCard },
+      { title: "Settings", href: "/settings", icon: Settings }
+    ]
   }
 ];
 
-interface SidebarContentProps {
-  onLinkClick?: () => void;
+interface AppBreadcrumbProps {
+  items: Array<{ label: string; href?: string }>;
 }
 
-function SidebarContent({ onLinkClick }: SidebarContentProps) {
-  const location = useLocation();
-
+export function AppBreadcrumb({ items }: AppBreadcrumbProps) {
   return (
-    <div className="flex h-full flex-col">
-      <nav className="flex-1 space-y-1 p-4">
-        {sidebarItems.map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              onClick={onLinkClick}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.title}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <Separator />
-
-      <div className="p-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback>JD</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">John Doe</p>
-            <p className="text-xs text-muted-foreground truncate">
-              john@example.com
-            </p>
-          </div>
-          <Button variant="ghost" size="icon">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink render={<Link to="/dashboard" />}>
+            <Home className="h-4 w-4" />
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator>
+          <ChevronRight />
+        </BreadcrumbSeparator>
+        {items.map((item, index) => (
+          <BreadcrumbItem key={index}>
+            {item.href ? (
+              <>
+                <BreadcrumbLink render={<Link to={item.href} />}>
+                  {item.label}
+                </BreadcrumbLink>
+                <BreadcrumbSeparator>
+                  <ChevronRight />
+                </BreadcrumbSeparator>
+              </>
+            ) : (
+              <BreadcrumbPage>{item.label}</BreadcrumbPage>
+            )}
+          </BreadcrumbItem>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }
 
-interface TopbarProps {
-  onMenuClick: () => void;
+function AppSidebar() {
+  const location = useLocation();
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" render={<Link to="/dashboard" />}>
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Store className="size-4" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">DispatchBD</span>
+                <span className="truncate text-xs">Multi-tenant Platform</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        {navigation.map((group) => (
+          <SidebarGroup key={group.title}>
+            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.href || 
+                    (item.href !== "/dashboard" && location.pathname.startsWith(item.href));
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton 
+                        isActive={isActive}
+                        tooltip={item.title}
+                        render={<Link to={item.href} />}
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+
+      <SidebarSeparator />
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>JD</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">John Doe</span>
+                  <span className="truncate text-xs">john@example.com</span>
+                </div>
+                <ChevronDown className="ml-auto size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="bottom"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
 }
 
-export function Topbar({ onMenuClick }: TopbarProps) {
+function SidebarHeaderComponent() {
+  const { isMobile } = useSidebar();
+
+  if (isMobile) {
+    return null;
+  }
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card px-6">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="lg:hidden"
-        onClick={onMenuClick}
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
-
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
+      <SidebarSeparator orientation="vertical" className="mr-2 h-4" />
       <div className="flex-1" />
-
-      <Button variant="ghost" size="icon">
+      <Button variant="ghost" size="icon-sm">
         <Bell className="h-4 w-4" />
       </Button>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <div className="flex items-center gap-2 p-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">John Doe</p>
-              <p className="text-xs text-muted-foreground">john@example.com</p>
-            </div>
-          </div>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive">
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </header>
   );
 }
@@ -194,46 +232,13 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   return (
-    <div className="min-h-screen bg-muted/50">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-card">
-        <div className="flex h-16 items-center border-b px-6">
-          <Link to="/dashboard" className="text-xl font-bold">
-            DispatchBD
-          </Link>
-        </div>
-        <SidebarContent />
-      </aside>
-
-      {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden fixed top-4 left-4 z-50"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
-          <SheetHeader className="border-b">
-            <SheetTitle className="text-left text-xl font-bold px-6 py-4">
-              DispatchBD
-            </SheetTitle>
-          </SheetHeader>
-          <SidebarContent onLinkClick={() => setSidebarOpen(false)} />
-        </SheetContent>
-      </Sheet>
-
-      {/* Main Content */}
-      <div className="lg:pl-64">
-        <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-6">{children}</main>
-      </div>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <SidebarHeaderComponent />
+        <main className="flex-1 p-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

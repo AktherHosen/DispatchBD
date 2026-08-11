@@ -13,6 +13,7 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { ArrowLeft, Loader2, Store } from "lucide-react";
 
 export default function StoreConnectionCreatePage() {
@@ -37,6 +38,7 @@ export default function StoreConnectionCreatePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <AppBreadcrumb items={[{ label: "Stores", href: "/stores" }, { label: "Add Store" }]} />
       <div>
         <Button
           variant="ghost"
