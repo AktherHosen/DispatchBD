@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,21 +12,35 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useRegisterMutation } from "@/store/api";
+import { setCredentials } from "@/store/authSlice";
+import { useAppDispatch } from "@/store/hooks";
+import { Loader2, AlertCircle } from "lucide-react";
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [register, { isLoading, error }] = useRegisterMutation();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // TODO: implement register API call
-    console.log({ name, email, password });
-    setLoading(false);
+    try {
+      const result = await register({ name, email, password }).unwrap();
+      dispatch(setCredentials(result));
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Registration failed:", err);
+    }
   };
+
+  const errorMessage = error && "data" in error 
+    ? (error.data as { message?: string })?.message 
+    : "An error occurred";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
@@ -39,6 +53,12 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -70,6 +90,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={8}
               />
               <p className="text-xs text-muted-foreground">
                 Must be at least 8 characters long
@@ -77,8 +98,8 @@ export default function RegisterPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating account...

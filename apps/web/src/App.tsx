@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
+import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -14,16 +16,8 @@ import ApiKeysPage from "@/features/api-keys/ApiKeysPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import SuperAdminPage from "@/pages/admin/SuperAdminPage";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = true; // TODO: check auth status
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return <AppLayout>{children}</AppLayout>;
-}
-
 function GuestRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = true; // TODO: check auth status
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -57,7 +51,9 @@ export default function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <AppLayout>
+                <DashboardPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -67,7 +63,9 @@ export default function App() {
           path="/stores"
           element={
             <ProtectedRoute>
-              <StoreConnectionsPage />
+              <AppLayout>
+                <StoreConnectionsPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -75,7 +73,9 @@ export default function App() {
           path="/stores/new"
           element={
             <ProtectedRoute>
-              <StoreConnectionCreatePage />
+              <AppLayout>
+                <StoreConnectionCreatePage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -83,7 +83,9 @@ export default function App() {
           path="/stores/orders"
           element={
             <ProtectedRoute>
-              <StoreOrdersPage />
+              <AppLayout>
+                <StoreOrdersPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -93,7 +95,9 @@ export default function App() {
           path="/couriers"
           element={
             <ProtectedRoute>
-              <CourierConnectionsPage />
+              <AppLayout>
+                <CourierConnectionsPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -101,7 +105,9 @@ export default function App() {
           path="/couriers/orders"
           element={
             <ProtectedRoute>
-              <CourierOrdersPage />
+              <AppLayout>
+                <CourierOrdersPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -111,7 +117,9 @@ export default function App() {
           path="/fraud"
           element={
             <ProtectedRoute>
-              <FraudCheckPage />
+              <AppLayout>
+                <FraudCheckPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -121,7 +129,9 @@ export default function App() {
           path="/moderators"
           element={
             <ProtectedRoute>
-              <div className="text-2xl font-bold">Moderators - Coming Soon</div>
+              <AppLayout>
+                <div className="text-2xl font-bold">Moderators - Coming Soon</div>
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -131,7 +141,9 @@ export default function App() {
           path="/api-keys"
           element={
             <ProtectedRoute>
-              <ApiKeysPage />
+              <AppLayout>
+                <ApiKeysPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -141,7 +153,9 @@ export default function App() {
           path="/plans"
           element={
             <ProtectedRoute>
-              <PlansPage />
+              <AppLayout>
+                <PlansPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -151,7 +165,9 @@ export default function App() {
           path="/settings"
           element={
             <ProtectedRoute>
-              <SettingsPage />
+              <AppLayout>
+                <SettingsPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -161,7 +177,9 @@ export default function App() {
           path="/admin"
           element={
             <ProtectedRoute>
-              <SuperAdminPage />
+              <AppLayout>
+                <SuperAdminPage />
+              </AppLayout>
             </ProtectedRoute>
           }
         />

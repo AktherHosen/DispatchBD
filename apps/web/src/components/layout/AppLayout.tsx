@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -18,10 +18,8 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
   SidebarSeparator,
   SidebarTrigger,
   useSidebar
@@ -34,6 +32,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useLogoutMutation } from "@/store/api";
+import { logout as logoutAction } from "@/store/authSlice";
 import {
   LayoutDashboard,
   Store,
@@ -48,8 +49,7 @@ import {
   ChevronDown,
   User,
   ChevronRight,
-  Home,
-  PanelLeft
+  Home
 } from "lucide-react";
 
 const navigation = [
@@ -117,6 +117,29 @@ export function AppBreadcrumb({ items }: AppBreadcrumbProps) {
 
 function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const [logoutApi] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch (error) {
+      // Ignore error, just clear local state
+    }
+    dispatch(logoutAction());
+    navigate("/login");
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -172,11 +195,17 @@ function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>JD</AvatarFallback>
+                  <AvatarFallback>
+                    {user?.name ? getInitials(user.name) : "JD"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">John Doe</span>
-                  <span className="truncate text-xs">john@example.com</span>
+                  <span className="truncate font-semibold">
+                    {user?.name || "John Doe"}
+                  </span>
+                  <span className="truncate text-xs">
+                    {user?.email || "john@example.com"}
+                  </span>
                 </div>
                 <ChevronDown className="ml-auto size-4" />
               </DropdownMenuTrigger>
@@ -195,7 +224,7 @@ function AppSidebar() {
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
@@ -233,12 +262,12 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   return (
-    <SidebarProvider>
+    <>
       <AppSidebar />
       <SidebarInset>
         <SidebarHeaderComponent />
         <main className="flex-1 p-6">{children}</main>
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }
