@@ -30,6 +30,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { useGetStoreConnectionsQuery, useDeleteStoreConnectionMutation, useTestStoreConnectionMutation, useSyncStoreOrdersMutation } from "@/store/api";
 import { Plus, Store, ExternalLink, RefreshCw, MoreHorizontal, Pencil, Trash2, Eye, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 function getStatusBadge(status: string) {
   switch (status) {
@@ -57,10 +58,29 @@ export default function StoreConnectionsPage() {
     setSyncingId(id);
     try {
       await syncOrders(id).unwrap();
+      toast.success("Orders synced successfully");
     } catch {
-      // error handled by RTK Query
+      toast.error("Failed to sync orders");
     } finally {
       setSyncingId(null);
+    }
+  };
+
+  const handleTest = async (id: string) => {
+    try {
+      await testConnection(id).unwrap();
+      toast.success("Connection tested successfully");
+    } catch {
+      toast.error("Connection test failed");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteConnection(id).unwrap();
+      toast.success("Connection deleted");
+    } catch {
+      toast.error("Failed to delete connection");
     }
   };
 
@@ -160,7 +180,7 @@ export default function StoreConnectionsPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             className="text-destructive"
-                            onClick={() => deleteConnection(conn._id)}
+                            onClick={() => handleDelete(conn._id)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete

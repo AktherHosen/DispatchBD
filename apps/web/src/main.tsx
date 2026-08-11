@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "sonner";
 import { store } from "./store/store";
 import App from "./App";
 import "./index.css";
@@ -15,6 +16,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <TooltipProvider>
           <SidebarProvider>
             <App />
+            <Toaster position="top-right" richColors />
           </SidebarProvider>
         </TooltipProvider>
       </ThemeProvider>

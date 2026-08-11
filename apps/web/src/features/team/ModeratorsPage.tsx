@@ -14,6 +14,7 @@ import { AppBreadcrumb } from "@/components/layout/AppLayout";
 import { useAppSelector } from "@/store/hooks";
 import { useGetMembersQuery, useInviteMemberMutation, useUpdateMemberRoleMutation, useRemoveMemberMutation } from "@/store/api";
 import { Users, UserPlus, MoreHorizontal, Shield, ShieldCheck, Trash2, AlertCircle, Loader2, Crown } from "lucide-react";
+import { toast } from "sonner";
 
 function getRoleBadge(role: string) {
   switch (role) {
@@ -64,19 +65,21 @@ export default function ModeratorsPage() {
     if (!inviteEmail) return;
     try {
       await inviteMember({ email: inviteEmail, role: inviteRole }).unwrap();
+      toast.success("Member invited successfully");
       setInviteDialogOpen(false);
       setInviteEmail("");
       setInviteRole("moderator");
     } catch {
-      // error handled by RTK Query
+      toast.error("Failed to invite member");
     }
   };
 
   const handleRoleChange = async (memberId: string, newRole: string) => {
     try {
       await updateMemberRole({ id: memberId, role: newRole }).unwrap();
+      toast.success("Role updated");
     } catch {
-      // error handled by RTK Query
+      toast.error("Failed to update role");
     }
   };
 
@@ -84,10 +87,11 @@ export default function ModeratorsPage() {
     if (!memberToRemove) return;
     try {
       await removeMember(memberToRemove.id).unwrap();
+      toast.success("Member removed");
       setRemoveDialogOpen(false);
       setMemberToRemove(null);
     } catch {
-      // error handled by RTK Query
+      toast.error("Failed to remove member");
     }
   };
 
